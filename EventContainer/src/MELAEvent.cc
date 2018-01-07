@@ -138,7 +138,7 @@ void MELAEvent::constructVVCandidates(int isZZ, int fstype){
     else if (isZZ==3) std::cerr << "No " << "Zgamma" << " candidate with final state " << fstype << " is possible!" << std::endl;
     else if (isZZ==4) std::cerr << "No " << "gammagamma" << " candidate with final state " << fstype << " is possible!" << std::endl;
     else if (isZZ==5) std::cerr << "No " << "Z+(n)jets" << " candidate with final state " << fstype << " is possible!" << std::endl;
-    else if (isZZ>5) std::cerr << "Unknown candidate with final state " << fstype << "!" << std::endl;
+    else std::cerr << "Unknown candidate decay mode " << isZZ << " and final state " << fstype << "!" << std::endl;
     return;
   }
 
@@ -177,7 +177,7 @@ void MELAEvent::constructVVCandidates(int isZZ, int fstype){
 
   std::vector<MELAParticle*> tmpVhandle;
 
-  if (isZZ==1 || isZZ==3 || isZZ==5){ // ZZ
+  if (isZZ==1 || isZZ==3){ // ZZ
 
     if (fstype<0 || (isZZ==1 && (fstype==0 || fstype==2 || fstype==3)) || (isZZ==3 && fstype==0)){ // Z->2l
       for (int c=0; c<3; c++){
