@@ -82,7 +82,7 @@ Bool_t MELAOptionParser::checkListVariable(const vector<string>& list, const str
 
 void MELAOptionParser::interpretOption(string wish, string value){
   if (wish.empty()){
-    cerr << "Unknown option with value " << value << endl;
+    cerr << "MELAOptionParser::interpretOption: Unknown option with value " << value << endl;
   }
   else if (wish=="Process") setProcess(value);
   else if (wish=="Production") setProduction(value);
@@ -137,7 +137,45 @@ void MELAOptionParser::interpretOption(string wish, string value){
     for (string const& opt:vtmp) extractCoupling(opt);
   }
 
-  else cerr << "Unknown specified argument: " << value << " with specifier " << wish << endl;
+  else if (wish=="ForceIncomingFlavors"){
+    vector<string> vtmp;
+    splitOptionRecursive(value, vtmp, ';');
+    forcedIncomingFlavorList.reserve(forcedIncomingFlavorList.size()+vtmp.size());
+    for (string const& opt:vtmp){
+      string strid1, strid2;
+      splitOption(opt, strid1, strid2, ',');
+      Int_t id1 = atoi(strid1.c_str());
+      Int_t id2 = atoi(strid2.c_str());
+      if (PDGHelpers::isAJet(abs(id1)) && PDGHelpers::isAJet(abs(id2))){
+        for (int iq=-5; iq<=5; iq++){
+          if (!(
+            PDGHelpers::isAnUnknownJet(id1)
+            ||
+            (PDGHelpers::isAQuark(id1) && id1==iq)
+            ||
+            (PDGHelpers::isAGluon(id1) && iq==0)
+            ||
+            (PDGHelpers::isAGluon(-id1) && iq!=0) // Special case: -21 means "not-a-gluon"
+            )) continue;
+          for (int jq=-5; jq<=5; jq++){
+            if (!(
+              PDGHelpers::isAnUnknownJet(id2)
+              ||
+              (PDGHelpers::isAQuark(id2) && id2==jq)
+              ||
+              (PDGHelpers::isAGluon(id2) && jq==0)
+              ||
+              (PDGHelpers::isAGluon(-id2) && jq!=0) // Special case: -21 means "not-a-gluon"
+              )) continue;
+            forcedIncomingFlavorList.emplace_back(iq, jq); // BE CAREFUL: 0 MEANS GLUON HERE!
+          }
+        }
+      }
+      else cerr << "MELAOptionParser::interpretOption: Incoming id pair (" << id1 << "," << id2 << ") is not supported in option " << wish << "!" << endl;
+    }
+  }
+
+  else cerr << "MELAOptionParser::interpretOption: Unknown specified argument: " << value << " with specifier " << wish << endl;
 }
 
 void MELAOptionParser::setProcess(string wish){

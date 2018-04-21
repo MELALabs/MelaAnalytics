@@ -72,6 +72,8 @@ protected:
   Bool_t isGenProb;
   Float_t defME;
 
+  std::vector<std::pair<Int_t, Int_t>> forcedIncomingFlavorList;
+
 public:
 
   Float_t hmass;
@@ -92,6 +94,10 @@ public:
   void splitOptionRecursive(const std::string rawoption, std::vector<std::string>& splitoptions, char delimiter);
   void interpretOption(std::string wish, std::string value);
 
+  Bool_t hasForcedIncomingFlavors() const{ return !forcedIncomingFlavorList.empty(); }
+  std::vector<std::pair<Int_t, Int_t>>& getForcedIncomingFlavorList(){ return forcedIncomingFlavorList; }
+  std::vector<std::pair<Int_t, Int_t>> const& getForcedIncomingFlavorList() const{ return forcedIncomingFlavorList; }
+
   Bool_t usePM4L() const{ return isPM4L; }
   Bool_t usePMaVJJ() const{ return isPMaVJJ; }
   Bool_t usePMaVJJTrue() const{ return isPMaVJJTrue; }
@@ -102,7 +108,7 @@ public:
   Bool_t isAliased() const{ return !strAlias.empty(); }
 
   Bool_t isCopy() const{ return !strCopyAlias.empty(); }
-  // Identify whether te option is a copy or not
+  // Identify whether the option is a copy or not
   // Note: MELAHypothesis can own an option pointer, so using a copy option does not necessarily change the method of the hypothesis
 
   Bool_t doBranch() const{ return !noBranching; }

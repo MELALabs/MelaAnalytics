@@ -54,7 +54,7 @@ void MELAHypothesis::computeP(){
 
   bool isGen = opt->isGen();
   MELACandidate* melaCand = mela->getCurrentCandidate();
-  if (melaCand!=0){
+  if (melaCand){
     // Set the couplings
     // Comment: We have more couplings than we will ever need in the next 50 years!
     mela->differentiate_HWW_HZZ = opt->coupl_H.separateWWZZcouplings;
@@ -200,16 +200,36 @@ void MELAHypothesis::computeP(){
     else computePFcn = &Mela::computeP;
     float pMEprior=pME;
     CALL_CLASSMEMBER_REF(mela, computePFcn)(pME, !isGen);
-    if (pME<0. && pME!=pMEprior){
+    if (!isGen){
+      mela->getPAux(pAux);
+      mela->getConstant(cMEAvg);
+    }
+
+    if (pME<0. && pME!=pMEprior){ // ME computation is not successful and important errors exist
+      // Print why an error occured
       TVar::VerbosityLevel bkpverbosity = mela->getVerbosity();
       mela->setVerbosity(TVar::DEBUG_VERBOSE);
       CALL_CLASSMEMBER_REF(mela, computePFcn)(pME, !isGen);
       TUtil::PrintCandidateSummary(mela->getCurrentCandidate());
       mela->setVerbosity(bkpverbosity);
     }
-    if (!isGen){
-      mela->getPAux(pAux);
-      mela->getConstant(cMEAvg);
+    else{ // ME computation is successful with no important errors
+
+      // Handle the case of forced incoming flavors
+      // Will always weight by parton luminosity
+      if (opt->hasForcedIncomingFlavors() && pME!=0.){ // If pME==0, don't bother
+        std::vector<std::pair<Int_t, Int_t>> const& motherIdPairList = opt->getForcedIncomingFlavorList();
+        MelaIO const* RcdME = mela->getIORecord();
+        double MEsq[nmsq][nmsq];
+        double partonWeight[2][nmsq];
+        RcdME->getUnweightedMEArray(MEsq);
+        RcdME->getPartonWeights(partonWeight[0], partonWeight[1]);
+        pME=0; // Reset pME
+        for (std::pair<Int_t, Int_t> const& mip:motherIdPairList){
+          double pMEcont = MEsq[mip.first][mip.second]*partonWeight[0][mip.first]*partonWeight[1][mip.second];
+          if (!std::isnan(pMEcont) && !std::isinf(pMEcont)) pME += pMEcont;
+        }
+      }
     }
 
     isUpdated = true;
