@@ -153,9 +153,9 @@ void MELAOptionParser::interpretOption(string wish, string value){
             ||
             (PDGHelpers::isAQuark(id1) && id1==iq)
             ||
-            (PDGHelpers::isAGluon(id1) && iq==0)
+            (PDGHelpers::isAGluon(id1) && id1>0 && iq==0)
             ||
-            (PDGHelpers::isAGluon(-id1) && iq!=0) // Special case: -21 means "not-a-gluon"
+            (PDGHelpers::isAGluon(-id1) && id1<0 && iq!=0) // Special case: -21 means "not-a-gluon"
             )) continue;
           for (int jq=-5; jq<=5; jq++){
             if (!(
@@ -163,9 +163,9 @@ void MELAOptionParser::interpretOption(string wish, string value){
               ||
               (PDGHelpers::isAQuark(id2) && id2==jq)
               ||
-              (PDGHelpers::isAGluon(id2) && jq==0)
+              (PDGHelpers::isAGluon(id2) && id2>0 && jq==0)
               ||
-              (PDGHelpers::isAGluon(-id2) && jq!=0) // Special case: -21 means "not-a-gluon"
+              (PDGHelpers::isAGluon(-id2) && id2<0 && jq!=0) // Special case: -21 means "not-a-gluon"
               )) continue;
             forcedIncomingFlavorList.emplace_back(iq, jq); // BE CAREFUL: 0 MEANS GLUON HERE!
           }
