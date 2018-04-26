@@ -226,9 +226,10 @@ void MELAHypothesis::computeP(){
         RcdME->getPartonWeights(partonWeight[0], partonWeight[1]);
         pME=0; // Reset pME
         for (std::pair<Int_t, Int_t> const& mip:motherIdPairList){
-          double pMEcont = MEsq[mip.first][mip.second]*partonWeight[0][mip.first]*partonWeight[1][mip.second];
+          double pMEcont = MEsq[mip.first+5][mip.second+5]*partonWeight[0][mip.first+5]*partonWeight[1][mip.second+5];
           if (!std::isnan(pMEcont) && !std::isinf(pMEcont)) pME += pMEcont;
         }
+        if (!isGen) pME *= cMEAvg;
       }
     }
 
