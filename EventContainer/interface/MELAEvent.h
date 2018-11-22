@@ -15,6 +15,7 @@ protected:
   std::vector<MELAParticle*> neutrinos;
   std::vector<MELAParticle*> photons;
   std::vector<MELAParticle*> jets;
+  std::vector<MELAParticle*> mothers;
   std::vector<MELACandidate*> candidates;
 
   double xsec;
@@ -42,7 +43,6 @@ public:
 
   void constructVVCandidates(int isZZ=1, int fstype=0);
   void applyParticleSelection();
-  void addVVCandidateMother(MELAParticle* mother);
   void addVVCandidateAppendages();
 
 
@@ -51,6 +51,7 @@ public:
   int getNNeutrinos() const{ return neutrinos.size(); }
   int getNPhotons() const{ return photons.size(); }
   int getNJets() const{ return jets.size(); }
+  int getNMothers() const{ return mothers.size(); }
   int getNIntermediates() const{ return intermediates.size(); }
   int getNParticles() const{ return particles.size(); }
 
@@ -59,6 +60,7 @@ public:
   MELAParticle* getNeutrino(int index) const;
   MELAParticle* getPhoton(int index) const;
   MELAParticle* getJet(int index) const;
+  MELAParticle* getMother(int index) const;
   MELAParticle* getIntermediate(int index) const;
   MELAParticle* getParticle(int index) const;
 
@@ -67,6 +69,7 @@ public:
   const std::vector<MELAParticle*>& getNeutrinos() const{ return neutrinos; }
   const std::vector<MELAParticle*>& getPhotons() const{ return photons; }
   const std::vector<MELAParticle*>& getJets() const{ return jets; }
+  const std::vector<MELAParticle*>& getMothers() const{ return mothers; }
   const std::vector<MELAParticle*>& getIntermediates() const{ return intermediates; }
   const std::vector<MELAParticle*>& getParticles() const{ return particles; }
 
@@ -75,6 +78,7 @@ public:
   std::vector<MELAParticle*>& getNeutrinos(){ return neutrinos; }
   std::vector<MELAParticle*>& getPhotons(){ return photons; }
   std::vector<MELAParticle*>& getJets(){ return jets; }
+  std::vector<MELAParticle*>& getMothers(){ return mothers; }
   std::vector<MELAParticle*>& getIntermediates(){ return intermediates; }
   std::vector<MELAParticle*>& getParticles(){ return particles; }
 
@@ -84,6 +88,7 @@ public:
   void addNeutrino(MELAParticle* myParticle, bool genuineParticle=true){ neutrinos.push_back(myParticle); if (genuineParticle) addParticle(myParticle); }
   void addPhoton(MELAParticle* myParticle, bool genuineParticle=true){ photons.push_back(myParticle); if (genuineParticle) addParticle(myParticle); }
   void addJet(MELAParticle* myParticle, bool genuineParticle=true){ jets.push_back(myParticle); if (genuineParticle) addParticle(myParticle); }
+  void addMother(MELAParticle* myParticle, bool genuineParticle=true){ mothers.push_back(myParticle); if (genuineParticle) addParticle(myParticle); }
   TLorentzVector missingP() const;
 
 protected:

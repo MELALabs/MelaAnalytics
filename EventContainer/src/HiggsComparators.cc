@@ -26,10 +26,9 @@ MELACandidate* HiggsComparators::matchAHiggsToParticle(MELAEvent& ev, MELAPartic
 
 MELACandidate* HiggsComparators::candidateSelector(MELAEvent& ev, HiggsComparators::CandidateSelection scheme, int isZZ){
   MELACandidate* cand=0;
-  for (int t=0; t<ev.getNCandidates(); t++){
-    MELACandidate* tmpCand = ev.getMELACandidate(t);
+  for (MELACandidate* tmpCand:ev.getCandidates()){
     if (!tmpCand->passSelection) continue;
-    if (cand==0) cand=tmpCand;
+    if (!cand) cand=tmpCand;
     else cand = HiggsComparators::candComparator(cand, tmpCand, scheme, isZZ);
   }
   return cand;

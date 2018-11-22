@@ -558,8 +558,13 @@ MELAParticle* MELAEvent::getNeutrino(int index)const{
 MELAParticle* MELAEvent::getPhoton(int index)const{
   if ((int)photons.size()>index) return photons.at(index);
   else return 0;
-}MELAParticle* MELAEvent::getJet(int index)const{
+}
+MELAParticle* MELAEvent::getJet(int index)const{
   if ((int)jets.size()>index) return jets.at(index);
+  else return 0;
+}
+MELAParticle* MELAEvent::getMother(int index)const{
+  if ((int) mothers.size()>index) return mothers.at(index);
   else return 0;
 }
 MELAParticle* MELAEvent::getIntermediate(int index)const{
@@ -582,9 +587,6 @@ TLorentzVector MELAEvent::missingP() const{
   return totalP;
 }
 
-void MELAEvent::addVVCandidateMother(MELAParticle* mother){
-  for (std::vector<MELACandidate*>::iterator it = candidates.begin(); it<candidates.end(); it++) (*it)->addMother(mother);
-}
 void MELAEvent::addVVCandidateAppendages(){
   for (std::vector<MELACandidate*>::iterator it = candidates.begin(); it<candidates.end(); it++){
     for (std::vector<MELAParticle*>::iterator iL = leptons.begin(); iL<leptons.end(); iL++){ if ((*iL)->passSelection) (*it)->addAssociatedLeptons(*iL); }
@@ -592,6 +594,7 @@ void MELAEvent::addVVCandidateAppendages(){
     for (std::vector<MELAParticle*>::iterator iP = photons.begin(); iP<photons.end(); iP++){ if ((*iP)->passSelection) (*it)->addAssociatedPhotons(*iP); }
     for (std::vector<MELAParticle*>::iterator iJ = jets.begin(); iJ<jets.end(); iJ++){ if ((*iJ)->passSelection) (*it)->addAssociatedJets(*iJ); }
     (*it)->addAssociatedVs();
+    for (std::vector<MELAParticle*>::iterator iM = mothers.begin(); iM<mothers.end(); iM++) (*it)->addMother(*iM);
   }
 }
 
