@@ -1,6 +1,7 @@
 #include "MELABranch.h"
 
 using namespace BranchHelpers;
+using namespace std;
 
 
 MELABranch::MELABranch(

@@ -47,7 +47,7 @@ protected:
     MELAParticle*& protectV
     );
 
-  std::vector<pair<MELAParticle*, std::vector<MELAParticle*>>> mapGluonsToQuarks(
+  std::vector<std::pair<MELAParticle*, std::vector<MELAParticle*>>> mapGluonsToQuarks(
     const std::vector<MELAParticle*>& gluons,
     const std::vector<MELAParticle*>& quarks,
     const std::vector<int>& permutation
@@ -55,13 +55,13 @@ protected:
 
   double getBestVHConfig(
     MELAParticle* protectV,
-    const std::vector<pair<MELAParticle*, std::vector<MELAParticle*>>>& quarks,
+    const std::vector<std::pair<MELAParticle*, std::vector<MELAParticle*>>>& quarks,
     std::vector<int>* qordered=nullptr,
     int* swapconfig=nullptr
     );
 
   double getBestVBFConfig(
-    const std::vector<pair<MELAParticle*, std::vector<MELAParticle*>>>& quarks,
+    const std::vector<std::pair<MELAParticle*, std::vector<MELAParticle*>>>& quarks,
     std::vector<int>* qordered=nullptr,
     int* swapconfig=nullptr
     );
