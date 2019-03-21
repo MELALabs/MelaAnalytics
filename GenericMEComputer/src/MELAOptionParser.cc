@@ -179,103 +179,22 @@ void MELAOptionParser::interpretOption(string wish, string value){
 }
 
 void MELAOptionParser::setProcess(string wish){
-  if (wish=="HSMHiggs") proc = TVar::HSMHiggs;
-  else if (wish=="H0_g1prime2") proc = TVar::H0_g1prime2;
-  else if (wish=="H0hplus") proc = TVar::H0hplus;
-  else if (wish=="H0minus") proc = TVar::H0minus;
-  else if (wish=="H0_Zgsg1prime2") proc = TVar::H0_Zgsg1prime2;
-  else if (wish=="H0_Zgs") proc = TVar::H0_Zgs;
-  else if (wish=="H0_Zgs_PS") proc = TVar::H0_Zgs_PS;
-  else if (wish=="H0_gsgs") proc = TVar::H0_gsgs;
-  else if (wish=="H0_gsgs_PS") proc = TVar::H0_gsgs_PS;
-
-  else if (wish=="D_g1g1prime2") proc = TVar::D_g1g1prime2;
-  else if (wish=="D_g1g2") proc = TVar::D_g1g2;
-  else if (wish=="D_g1g2_pi_2") proc = TVar::D_g1g2_pi_2;
-  else if (wish=="D_g1g4") proc = TVar::D_g1g4;
-  else if (wish=="D_g1g4_pi_2") proc = TVar::D_g1g4_pi_2;
-  else if (wish=="D_zzzg_g1prime2") proc = TVar::D_zzzg_g1prime2;
-  else if (wish=="D_zzzg_g1prime2_pi_2") proc = TVar::D_zzzg_g1prime2_pi_2;
-  else if (wish=="D_zzzg") proc = TVar::D_zzzg;
-  else if (wish=="D_zzzg_PS") proc = TVar::D_zzzg_PS;
-  else if (wish=="D_zzgg") proc = TVar::D_zzgg;
-  else if (wish=="D_zzgg_PS") proc = TVar::D_zzgg_PS;
-
-  else if (wish=="H1minus") proc = TVar::H1minus;
-  else if (wish=="H1plus") proc = TVar::H1plus;
-
-  else if (wish=="H2_g1") proc = TVar::H2_g1;
-  else if (wish=="H2_g2") proc = TVar::H2_g2;
-  else if (wish=="H2_g3") proc = TVar::H2_g3;
-  else if (wish=="H2_g4") proc = TVar::H2_g4;
-  else if (wish=="H2_g5") proc = TVar::H2_g5;
-  else if (wish=="H2_g1g5") proc = TVar::H2_g1g5;
-  else if (wish=="H2_g6") proc = TVar::H2_g6;
-  else if (wish=="H2_g7") proc = TVar::H2_g7;
-  else if (wish=="H2_g8") proc = TVar::H2_g8;
-  else if (wish=="H2_g9") proc = TVar::H2_g9;
-  else if (wish=="H2_g10") proc = TVar::H2_g10;
-
-  else if (wish=="bkgZGamma") proc = TVar::bkgZGamma;
-  else if (wish=="bkgZJets") proc = TVar::bkgZJets;
-  else if (wish=="bkgZZ") proc = TVar::bkgZZ;
-  else if (wish=="bkgWW") proc = TVar::bkgWW;
-  else if (wish=="bkgWWZZ") proc = TVar::bkgWWZZ;
-
-  else if (wish=="bkgZZ_SMHiggs") proc = TVar::bkgZZ_SMHiggs;
-  else if (wish=="bkgWW_SMHiggs") proc = TVar::bkgWW_SMHiggs;
-  else if (wish=="bkgWWZZ_SMHiggs") proc = TVar::bkgWWZZ_SMHiggs;
-
-  else if (wish=="HSMHiggs_WWZZ") proc = TVar::HSMHiggs_WWZZ;
-
-  else if (wish=="D_gg10") proc = TVar::D_gg10;
-
-  else if (wish=="SelfDefine_spin0") proc = TVar::SelfDefine_spin0;
-  else if (wish=="SelfDefine_spin1") proc = TVar::SelfDefine_spin1;
-  else if (wish=="SelfDefine_spin2") proc = TVar::SelfDefine_spin2;
-  else cerr << "MELAOptionParser::setProcess(" << wish << "): Failed to find the proper process." << endl;
+  for (int iproc=TVar::HSMHiggs; iproc!=TVar::nProcesses; iproc++){
+    if (wish == TVar::ProcessName((TVar::Process) iproc).Data()){ proc = (TVar::Process) iproc; return; }
+  }
+  cerr << "MELAOptionParser::setProcess(" << wish << "): Failed to find the proper process." << endl;
 }
 void MELAOptionParser::setProduction(string wish){
-  if (wish=="ZZGG" || wish=="GG") prod = TVar::ZZGG;
-  else if (wish=="ZZQQB" || wish=="QQB") prod = TVar::ZZQQB;
-  else if (wish=="ZZQQB_STU" || wish=="QQB_STU") prod = TVar::ZZQQB_STU;
-  else if (wish=="ZZQQB_S" || wish=="QQB_S") prod = TVar::ZZQQB_S;
-  else if (wish=="ZZQQB_TU" || wish=="QQB_TU") prod = TVar::ZZQQB_TU;
-  else if (wish=="ZZINDEPENDENT" || wish=="INDEPENDENT") prod = TVar::ZZINDEPENDENT;
-
-  else if (wish=="JQCD") prod = TVar::JQCD;
-  else if (wish=="GammaH") prod = TVar::GammaH;
-
-  else if (wish=="Lep_ZH") prod = TVar::Lep_ZH;
-  else if (wish=="Lep_WH") prod = TVar::Lep_WH;
-  else if (wish=="Had_ZH") prod = TVar::Had_ZH;
-  else if (wish=="Had_WH") prod = TVar::Had_WH;
-  else if (wish=="JJEWQCD") prod = TVar::JJEWQCD;
-  else if (wish=="JJEW") prod = TVar::JJEW;
-  else if (wish=="JJVBF") prod = TVar::JJVBF;
-  else if (wish=="JJQCD") prod = TVar::JJQCD;
-
-  else if (wish=="Lep_ZH_S") prod = TVar::Lep_ZH_S;
-  else if (wish=="Lep_WH_S") prod = TVar::Lep_WH_S;
-  else if (wish=="Had_ZH_S") prod = TVar::Had_ZH_S;
-  else if (wish=="Had_WH_S") prod = TVar::Had_WH_S;
-  else if (wish=="JJEWQCD_S") prod = TVar::JJEWQCD_S;
-  else if (wish=="JJEW_S") prod = TVar::JJEW_S;
-  else if (wish=="JJVBF_S") prod = TVar::JJVBF_S;
-  else if (wish=="JJQCD_S") prod = TVar::JJQCD_S;
-
-  else if (wish=="Lep_ZH_TU") prod = TVar::Lep_ZH_TU;
-  else if (wish=="Lep_WH_TU") prod = TVar::Lep_WH_TU;
-  else if (wish=="Had_ZH_TU") prod = TVar::Had_ZH_TU;
-  else if (wish=="Had_WH_TU") prod = TVar::Had_WH_TU;
-  else if (wish=="JJEWQCD_TU") prod = TVar::JJEWQCD_TU;
-  else if (wish=="JJEW_TU") prod = TVar::JJEW_TU;
-  else if (wish=="JJVBF_TU") prod = TVar::JJVBF_TU;
-  else if (wish=="JJQCD_TU") prod = TVar::JJQCD_TU;
-
-  else if (wish=="ttH") prod = TVar::ttH;
-  else if (wish=="bbH") prod = TVar::bbH;
-  else cerr << "MELAOptionParser::setProduction(" << wish << "): Failed to find the proper production." << endl;
+  if (wish=="GG"){ prod = TVar::ZZGG; return; }
+  else if (wish=="QQB"){ prod = TVar::ZZQQB; return; }
+  else if (wish=="QQB_STU"){ prod = TVar::ZZQQB_STU; return; }
+  else if (wish=="QQB_S"){ prod = TVar::ZZQQB_S; return; }
+  else if (wish=="QQB_TU"){ prod = TVar::ZZQQB_TU; return; }
+  else if (wish=="INDEPENDENT"){ prod = TVar::ZZINDEPENDENT; return; }
+  for (int iprod=TVar::ZZGG; iprod!=TVar::nProductions; iprod++){
+    if (wish == TVar::ProductionName((TVar::Production) iprod).Data()){ prod = (TVar::Production) iprod; return; }
+  }
+  cerr << "MELAOptionParser::setProduction(" << wish << "): Failed to find the proper production." << endl;
 }
 void MELAOptionParser::setME(string wish){
   if (wish=="MCFM") ME = TVar::MCFM;
@@ -322,7 +241,7 @@ void MELAOptionParser::extractCoupling(string opt){
   }
   else valRe = atof(strVal.c_str());
 
-  // Here we go again, sillions of couplings
+  // Here we go again, zillions of couplings
   if (wish=="separateWWZZcouplings") coupl_H.allow_WWZZSeparation((bool)valRe);
   // Spin-0 couplings, first resonance
   else if (wish=="kappa"){ coupl_H.Hqqcoupl[gHIGGS_KAPPA][0]=valRe; coupl_H.Hqqcoupl[gHIGGS_KAPPA][1]=valIm; }
