@@ -38,6 +38,10 @@ protected:
 
   std::vector<MELAParticle*> extraParticles;
 
+  double getQGMergeScore(MELAParticle* p1, MELAParticle* p2) const;
+  double getGGMergeScore(MELAParticle* g1, MELAParticle* g2) const;
+  double getMergeScore(MELAParticle* p1, MELAParticle* p2) const;
+
   MELAParticle* mergeTwoGluons(MELAParticle* glu1, MELAParticle* glu2);
 
   bool merge2Qto1G(
@@ -65,6 +69,12 @@ protected:
     std::vector<int>* qordered=nullptr,
     int* swapconfig=nullptr
     );
+
+  double getBestHJJConfig(
+    const std::vector<std::pair<MELAParticle*, std::vector<MELAParticle*>>>& partons,
+    std::vector<int>* qordered=nullptr,
+    int* swapconfig=nullptr
+  );
 
   double getVBFLikelihood(
     const std::vector<MELAParticle*>& gluons,
@@ -99,6 +109,8 @@ public:
   void reduceJJtoQuarks(MELACandidate*& cand);
 
   void deduceLOVHTopology(MELACandidate*& cand);
+  void deduceLOVBFTopology(MELACandidate*& cand); // Alias for reduceJJtoQuarks
+  void deduceLOHJJTopology(MELACandidate*& cand);
 
 };
 

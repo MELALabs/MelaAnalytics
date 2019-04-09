@@ -3,6 +3,37 @@
 using namespace std;
 using namespace TNumericUtil;
 
+
+double MELACandidateRecaster::getQGMergeScore(MELAParticle* p1, MELAParticle* p2) const{
+  if (
+    p1 && p2 && p1!=p2
+    &&
+    !(PDGHelpers::isAQuark(p1->id) && PDGHelpers::isAQuark(p2->id))
+    &&
+    !(PDGHelpers::isAGluon(p1->id) && PDGHelpers::isAGluon(p2->id))
+    ) return fabs(p1->dot(p2))*GeVsqunit;
+  else return -1;
+}
+double MELACandidateRecaster::getGGMergeScore(MELAParticle* g1, MELAParticle* g2) const{
+  if (
+    g1 && g2 && g1!=g2
+    &&
+    PDGHelpers::isAGluon(g1->id) && PDGHelpers::isAGluon(g2->id)
+    ){
+    double sDiff = (g1->p4 - g2->p4).M2()*GeVsqunit;
+    double sSum = (g1->p4 + g2->p4).M2()*GeVsqunit;
+    return fabs(pow(sSum, 2)/sDiff);
+  }
+  else return -1;
+}
+double MELACandidateRecaster::getMergeScore(MELAParticle* p1, MELAParticle* p2) const{
+  double res = getGGMergeScore(p1, p2);
+  if (res<0.) res = getQGMergeScore(p1, p2);
+  return res;
+}
+
+
+
 double MELACandidateRecaster::getVffEquivalentCoupling(int iferm, int jferm){
   const double xw = 0.23119;
   const double aR_lep = -2.*xw*(-1.);
@@ -155,8 +186,8 @@ void MELACandidateRecaster::adjustForIncomingMomenta(
   if (mothers.size()!=2) return;
 
   TLorentzRotation ltr; // Boost*Rotation*Boost
-  TLorentzVector& pLab1 = mothers.at(0).second;
-  TLorentzVector& pLab2 = mothers.at(1).second;
+  TLorentzVector const& pLab1 = mothers.at(0).second;
+  TLorentzVector const& pLab2 = mothers.at(1).second;
   TLorentzVector pLab12 = pLab1 + pLab2;
   if (pLab1.Pt()+pLab2.Pt()==0.) return; // If pTs are 0, don't touch the system
   // Else, boost to p=0 frame and rotate the z axis
@@ -200,6 +231,8 @@ nAssociated(0)
 
   if (
     candScheme==TVar::JJVBF
+    ||
+    candScheme==TVar::JJQCD
     ||
     candScheme==TVar::Had_ZH
     ||
@@ -451,8 +484,8 @@ double MELACandidateRecaster::getBestVBFConfig(
   std::vector<int>* qordered,
   int* swapconfig
   ){
-  const unsigned int nQin=2;
-  const unsigned int nQreq=4;
+  constexpr unsigned int nQin=2;
+  constexpr unsigned int nQreq=4;
   double bestCfgLikelihood=-1;
   double bestCfgSysE=0;
   if (quarks.size()<nQreq) return bestCfgLikelihood;
@@ -559,6 +592,97 @@ double MELACandidateRecaster::getBestVBFConfig(
   return bestCfgLikelihood;
 }
 
+
+double MELACandidateRecaster::getBestHJJConfig(
+  const std::vector<pair<MELAParticle*, std::vector<MELAParticle*>>>& partons,
+  std::vector<int>* order,
+  int* swapconfig
+){
+  constexpr unsigned int nPartonsIn=2;
+  constexpr unsigned int nPartonsReq=4;
+  bool bestCfgLikelihoodFound = false;
+  double bestCfgSysE=0;
+  if (partons.size()<nPartonsReq) return -1;
+
+  if (swapconfig) *swapconfig=0;
+  if (order){
+    order->clear();
+    for (unsigned int i=0; i<nPartonsReq; i++) order->push_back(-1);
+  }
+
+  vector<vector<int>> parton_perm;
+  {
+    vector<vector<int>> parton_perm2;
+    CombinationGenerator(partons.size(), nPartonsIn, parton_perm2, 0);
+    for (auto it_in=parton_perm2.begin(); it_in!=parton_perm2.end(); it_in++){
+      for (auto it_out=parton_perm2.begin(); it_out!=parton_perm2.end(); it_out++){
+        if (it_in==it_out) continue;
+        vector<int>& inperm = *it_in;
+        vector<int>& outperm = *it_out;
+        bool isUniqueComb=true;
+        for (auto& ppin:inperm){
+          for (auto& ppout:outperm){
+            if (ppin==ppout){
+              isUniqueComb=false;
+              break;
+            }
+          }
+          if (!isUniqueComb) break;
+        }
+        if (isUniqueComb){
+          parton_perm.push_back(vector<int>());
+          for (auto& ppin:inperm) parton_perm.back().push_back(ppin);
+          for (auto& ppout:outperm) parton_perm.back().push_back(ppout);
+        }
+      }
+    }
+  }
+  for (auto& perm:parton_perm){
+    int swapcfg=0;
+    int id[nPartonsReq];
+    TLorentzVector p4[nPartonsReq];
+
+    // Assign incoming/outgoing momenta
+    for (unsigned int i=0; i<nPartonsReq; i++){
+      const int& qindex = perm.at(i);
+      const MELAParticle* quark=partons.at(qindex).first;
+
+      int genstat = quark->genStatus;
+      id[i]=quark->id;
+      p4[i]=quark->p4;
+      for (MELAParticle* gluon:partons.at(qindex).second){
+        if (gluon->genStatus*genstat>0) p4[i] = p4[i] + gluon->p4;
+        else p4[i] = p4[i] - gluon->p4;
+      }
+      if ((genstat==-1 && i>=2) || (genstat>=0 && i<2)){
+        id[i] = -id[i];
+        p4[i] = -p4[i];
+        swapcfg += pow(2, i);
+      }
+    }
+
+    // Check if boosting to the pT=0 frame is still valid (MELA check for PDFs)
+    TLorentzVector pTotal=p4[0]+p4[1];
+    if (pTotal.M2()<0.) continue;
+    pTotal.Boost(-pTotal.X()/pTotal.T(), -pTotal.Y()/pTotal.T(), 0);
+    const double sysPz = pTotal.Z();
+    const double sysE = pTotal.T();
+    const double Ez0 = (sysE+sysPz)/2.;
+    const double Ez1 = (sysE-sysPz)/2.;
+    if (Ez0<0. || Ez1<0.) continue;
+
+    // Also check for a greater sysE if the current combination likelihood is equivalent.
+    if (!bestCfgLikelihoodFound || bestCfgSysE<sysE){
+      bestCfgLikelihoodFound = true;
+      bestCfgSysE=sysE;
+      if (order) swap(*order, perm);
+      if (swapconfig) *swapconfig=swapcfg;
+    }
+  }
+  if (!bestCfgLikelihoodFound && order) order->clear(); // Clear so that we can just check for size
+  return (bestCfgLikelihoodFound ? 1 : -1);
+}
+
 double MELACandidateRecaster::getVBFLikelihood(
   const std::vector<MELAParticle*>& gluons,
   const std::vector<MELAParticle*>& quarks,
@@ -618,9 +742,7 @@ double MELACandidateRecaster::getMergeOrder_GluonsIntoQuarks(
           }
           else{ // Merge this gluon pair
             tmpGluonList.push_back(mergedGluon);
-            double sDiff = (mergedGluon->getDaughter(0)->p4 - mergedGluon->getDaughter(1)->p4).M2()*GeVsqunit;
-            double sSum = mergedGluon->p4.M2()*GeVsqunit;
-            penalty *= fabs(pow(sSum, 2)/sDiff);
+            penalty *= getGGMergeScore(mergedGluon->getDaughter(0), mergedGluon->getDaughter(1));
           }
           icfg = icfg >> 1;
         }
@@ -665,7 +787,7 @@ double MELACandidateRecaster::getMergeOrder_GluonsIntoQuarks(
     // Calculate k.p between quarks and gluons
     for (auto& quark:quarks){
       float kDp = 1e20;
-      if (!(quark->genStatus==-1 && gluon->genStatus==-1) || doDotincomingParticles) kDp = fabs(gluon->dot(quark))*GeVsqunit; // Do not dot incoming particles
+      if (!(quark->genStatus==-1 && gluon->genStatus==-1) || doDotincomingParticles) kDp = getQGMergeScore(gluon, quark); // Do not dot incoming particles
       theQuantifier.push_back(kDp);
     }
     quantifiers.push_back(theQuantifier);
@@ -719,6 +841,7 @@ double MELACandidateRecaster::getMergeOrder_GluonsIntoQuarks(
   }
 
   if (chosenPerm>=0) bestConfig=permutator.at(chosenPerm);
+  // If the merged config is better than split, use that one
   if (bestMergedConfigKDP>0. && bestMergedConfigKDP<smallestKDP){
     bestConfig=bestMergedConfig;
     smallestKDP=bestMergedConfigKDP;
@@ -744,7 +867,7 @@ void MELACandidateRecaster::copyCandidate(MELACandidate* cand, MELACandidate*& c
 
 void MELACandidateRecaster::reduceJJtoQuarks(MELACandidate*& cand){
   if (candScheme==TVar::nProductions) return;
-  if (cand==nullptr) return;
+  if (!cand) return;
   unsigned int nQ = 2 + nAssociated; // Assume mothers are supposed to be quarks as well
   // If VH, find a V to protect.
   vector<MELAParticle*> protectedVs;
@@ -763,7 +886,7 @@ void MELACandidateRecaster::reduceJJtoQuarks(MELACandidate*& cand){
     if (PDGHelpers::isAGluon(part->id)) gluons.push_back(part);
     else quarks.push_back(part);
   }
-  // Gather all asociated quarks and gluons except the protected V
+  // Gather all associated quarks and gluons except the protected V
   for (auto& part:cand->getAssociatedJets()){
     if (PDGHelpers::isAGluon(part->id)) gluons.push_back(part);
     else{
@@ -813,28 +936,26 @@ void MELACandidateRecaster::reduceJJtoQuarks(MELACandidate*& cand){
   // MERGE
   vector<int> bestMerge;
   if (hasProtectedV) protectedVs.push_back(protectV);
-  bool doGintoQ = getMergeOrder_GluonsIntoQuarks(gluons, quarks, bestMerge, true, &protectedVs);
   // Merge the gluons into quarks
-  for (unsigned int ig=0; ig<bestMerge.size(); ig++){
-    unsigned int qindex, gindex;
-    if (doGintoQ){
+  if (getMergeOrder_GluonsIntoQuarks(gluons, quarks, bestMerge, true, &protectedVs)>=0.){
+    for (unsigned int ig=0; ig<bestMerge.size(); ig++){
+      unsigned int qindex, gindex;
       gindex=ig;
       qindex=bestMerge.at(ig);
+
+      MELAParticle* theGluon = gluons.at(gindex);
+      MELAParticle* theQuark = quarks.at(qindex);
+
+      // Add gluon momentum to the chosen quark
+      //cout << "Considering to merge gluon " << gindex << " (E=" << theGluon->t() << ", stat=" << theGluon->genStatus << ") with quark " << qindex << " (E=" << theQuark->t() << ", id=" << theQuark->id << ", stat=" << theQuark->genStatus << ")" << endl;
+      if (theQuark->genStatus*theGluon->genStatus>0) (*theQuark) += theGluon->p4;
+      else (*theQuark) += -theGluon->p4;
+      //cout << "After merging: Quark " << qindex << " (E=" << theQuark->t() << ", id=" << theQuark->id << ", stat=" << theQuark->genStatus << ")" << endl;
     }
-    else break;
-
-    MELAParticle* theGluon = gluons.at(gindex);
-    MELAParticle* theQuark = quarks.at(qindex);
-
-    // Add gluon momentum to the chosen quark
-    //cout << "Considering to merge gluon " << gindex << " (E=" << theGluon->t() << ", stat=" << theGluon->genStatus << ") with quark " << qindex << " (E=" << theQuark->t() << ", id=" << theQuark->id << ", stat=" << theQuark->genStatus << ")" << endl;
-    if (theQuark->genStatus*theGluon->genStatus>0) (*theQuark) += theGluon->p4;
-    else (*theQuark) += -theGluon->p4;
-    //cout << "After merging: Quark " << qindex << " (E=" << theQuark->t() << ", id=" << theQuark->id << ", stat=" << theQuark->genStatus << ")" << endl;
   }
   // Re-adjust V daughter momenta/ids/genStatus
   for (auto& protV:protectedVs){
-    protV->p4=TLorentzVector(0, 0, 0, 0); // Reset protected V momentum
+    protV->p4 = TLorentzVector(0, 0, 0, 0); // Reset protected V momentum
     for (auto& Vdau:protV->getDaughters()) protV->p4 = protV->p4 + Vdau->p4;
   }
   // END MERGE
@@ -897,7 +1018,7 @@ void MELACandidateRecaster::reduceJJtoQuarks(MELACandidate*& cand){
 
 void MELACandidateRecaster::deduceLOVHTopology(MELACandidate*& cand){
   if (candScheme==TVar::nProductions) return;
-  if (cand==nullptr) return;
+  if (!cand) return;
   bool protectVStricttmp=protectVStrict;
   protectVStrict=true; // No need to modify the V in the intermediate candidate
   MELACandidate* candLookUp;
@@ -981,6 +1102,223 @@ void MELACandidateRecaster::deduceLOVHTopology(MELACandidate*& cand){
   {
     MELACandidate* candtmp;
     copyCandidate(cand, candtmp, false);
+    delete cand; cand=candtmp;
+  }
+}
+
+void MELACandidateRecaster::deduceLOVBFTopology(MELACandidate*& cand){ reduceJJtoQuarks(cand); }
+
+
+/*
+double MELACandidateRecaster::getBestGluonMerge(
+  int nGReq,
+  std::vector<MELAParticle*>& gluons,
+  std::vector<std::pair<int, int>>& bestConfig
+  ){
+  double bestPenalty=-1;
+  if (gluons.empty()) return bestPenalty;
+  unsigned int nG = gluons.size();
+
+  vector<vector<int>> gluonPermutations;
+  // Get nGs! permutations so that the set of pairwise merges is just equivalent to splitting of these permutations pairwise.
+  PermutationGenerator(nG, nG, gluonPermutations, 0);
+  for (auto& gperm:gluonPermutations){
+    assert((int) gperm.size()==nG);
+    // Get merged gluons
+    vector<MELAParticle*> mergedGluons; // Temporary collection of merged gluons to delete
+    for (unsigned int ip=0; ip<gperm.size()/2; ip++){
+      int ig = gperm.at(2*ip);
+      int jg = gperm.at(2*ip+1);
+      MELAParticle* glu1=gluons.at(ig);
+      MELAParticle* glu2=gluons.at(jg);
+      MELAParticle* mergedGluon = mergeTwoGluons(glu1, glu2);
+      mergedGluons.push_back(mergedGluon);
+    }
+
+    // Number of merging possibilities is 2^(N merged gluons)
+    int nMergeUnmerge = pow(2, (int) mergedGluons.size());
+    // Iterate over the different merging possiblities of the curent gluon permutation
+    // Start from 1 because 0 means all unmerged, which is not what we want to check under the doMergeGluons if-condition.
+    for (int imc=1; imc<nMergeUnmerge; imc++){
+      int icfg=imc;
+      vector<MELAParticle*> tmpGluonList;
+      std::vector<std::pair<int, int>> currentConfig; currentConfig.reserve(gluons.size());
+      double penalty=1;
+
+      for (auto& mergedGluon:mergedGluons){ // Iterate over the gluon pairs
+        if (icfg%2==0){ // Do not merge this particular gluon pair
+          MELAParticle* dau1 = mergedGluon->getDaughter(0);
+          MELAParticle* dau2 = mergedGluon->getDaughter(1);
+          tmpGluonList.push_back(dau1);
+          tmpGluonList.push_back(dau2);
+          for (unsigned int igluon=0; igluon<gluons.size(); igluon++){
+            MELAParticle* matchGluon = gluons.at(igluon);
+            if (matchGluon==dau1 || matchGluon==dau2) currentConfig.emplace_back(igluon, -1);
+          }
+        }
+        else{ // Merge this gluon pair
+          tmpGluonList.push_back(mergedGluon);
+          MELAParticle* dau1 = mergedGluon->getDaughter(0);
+          MELAParticle* dau2 = mergedGluon->getDaughter(1);
+          double sDiff = (dau1->p4 - dau2->p4).M2()*GeVsqunit;
+          double sSum = mergedGluon->p4.M2()*GeVsqunit;
+          penalty *= fabs(pow(sSum, 2)/sDiff);
+          for (unsigned int igluon=0; igluon<gluons.size(); igluon++){
+            MELAParticle* mg1 = gluons.at(igluon);
+            for (unsigned int jgluon=0; jgluon<gluons.size(); jgluon++){
+              MELAParticle* mg2 = gluons.at(jgluon);
+              if (mg1==dau1 && mg2==dau2) currentConfig.emplace_back(igluon, jgluon);
+            }
+          }
+        }
+        icfg = icfg >> 1;
+      }
+      // Remember that if there is an odd number of starting gluons, the last gluon of the permutation over the gluons is a singleton.
+      if (nGsIsOdd) tmpGluonList.push_back(gluons.at(gperm.back()));
+      if (tmpGluonList.size()!=nGReq) continue;
+
+      if (bestPenalty<0. || bestPenalty>penalty){
+        bestPenalty=penalty;
+        std::swap(currentConfig, bestConfig);
+      }
+    }
+    for (auto& mg:mergedGluons) delete mg;
+  } // Loop over gluon permutations
+}
+*/
+
+void MELACandidateRecaster::deduceLOHJJTopology(MELACandidate*& cand){
+  if (candScheme!=TVar::JJQCD) return;
+  if (!cand) return;
+
+  // Gather all quarks and gluons
+  unsigned int nQ = 0;
+  unsigned int nG = 0;
+  vector<MELAParticle*> partons; // Only need a single collection
+  // Gather all mother quarks and gluons
+  for (int ip=0; ip<cand->getNMothers(); ip++){
+    MELAParticle* part = cand->getMother(ip);
+    part->p4 = -part->p4;
+    if (PDGHelpers::isAGluon(part->id)) nG++;
+    else nQ++;
+    partons.push_back(part);
+  }
+  // Gather all associated quarks and gluons except the protected V
+  for (auto& part:cand->getAssociatedJets()){
+    if (PDGHelpers::isAGluon(part->id)) nG++;
+    else nQ++;
+    partons.push_back(part);
+  }
+
+  int nExtraJets = nQ+nG-4;
+  if (nExtraJets<0 || nQ%2==1){
+    cerr << "MELACandidateRecaster::deduceLOHJJTopology: (nQ, nG) = (" << nQ << ", " << nG << ") is not valid!"  << endl;
+    exit(1);
+  }
+  else if (nExtraJets==0) return;
+  else if (nExtraJets>1){
+    cerr << "MELACandidateRecaster::deduceLOHJJTopology: (nQ, nG) = (" << nQ << ", " << nG << ") is valid, but the implementation only supports 1 extra jet at this moment."  << endl;
+    exit(1);
+  }
+
+  vector<pair<MELAParticle*, vector<MELAParticle*>>> bestMergeConfig; bestMergeConfig.reserve(4);
+  double bestScore=-99;
+
+  vector<vector<int>> partonPermutations;
+  CombinationGenerator(partons.size(), 4, partonPermutations, 0);
+  for (auto& perm:partonPermutations) std::sort(perm.begin(), perm.end()); // Sort the permutation index list such that a mother always come first
+  for (auto& perm:partonPermutations){
+    vector<MELAParticle*> missingPartons; missingPartons.reserve(nExtraJets);
+    for (unsigned int i=0; i<nQ+nG; i++){ if (std::find(perm.begin(), perm.end(), static_cast<int>(i))==perm.end()) missingPartons.push_back(partons.at(i)); }
+    if ((int) missingPartons.size()!=nExtraJets){
+      cerr << "MELACandidateRecaster::deduceLOHJJTopology: missingPartons.size() = " << missingPartons.size() << " != nExtraJets = " << nExtraJets << endl;
+      exit(1);
+    }
+
+    // Check if sum of charges of extra partons is 0.
+    {
+      float sumChargeQExtra=0;
+      for (auto const& part:missingPartons) sumChargeQExtra += part->charge();
+      if (fabs(sumChargeQExtra)>1e-5) continue;
+    }
+
+    if (nExtraJets==1){
+      double score=-1; // Score of merge
+      int iSelected=-1; // Index of parton to merge into
+      for (auto const& ipart:perm){
+        double tmpscore = getMergeScore(partons.at(ipart), missingPartons.front());
+        if (tmpscore<0.) continue;
+        if (score<0. || tmpscore<score){
+          iSelected=ipart;
+          score=tmpscore;
+        }
+      }
+      if (iSelected>=0 && bestScore>score){
+        bestScore = score;
+        bestMergeConfig.clear();
+        for (auto const& ipart:perm){
+          vector<MELAParticle*> tmpMergeList; tmpMergeList.reserve(nExtraJets);
+          if (ipart == iSelected) tmpMergeList.push_back(missingPartons.front());
+          bestMergeConfig.emplace_back(partons.at(ipart), tmpMergeList);
+        }
+      }
+    }
+    else{
+      cerr << "MELACandidateRecaster::deduceLOHJJTopology: nExtraJets = " << nExtraJets << " is not implemented." << endl;
+      exit(1);
+    }
+  }
+
+  // MERGE
+  if (!bestMergeConfig.empty()){
+    for (auto& cfg:bestMergeConfig){
+      MELAParticle*& targetPart = cfg.first;
+      for (MELAParticle*& mergePart:cfg.second){
+        *targetPart += mergePart->p4;
+        mergePart->setSelected(false);
+      }
+      cfg.second.clear(); // Clear the list of particles to merge so that the same bestMergeConfig collection can be reused below
+    }
+  }
+  // END MERGE
+  
+  // Revert the momenta of incoming particles
+  for (MELAParticle*& part:partons){ if (part->genStatus<0) part->p4 = -part->p4; }
+
+  // Reorder all particles
+  int swapconfig;
+  vector<int> part_order;
+  getBestHJJConfig(bestMergeConfig, &part_order, &swapconfig);
+  if (!(part_order.empty() || part_order.size()==bestMergeConfig.size())){
+    cerr << "part_order.empty() ? " << part_order.empty() << endl;
+    cerr << "part_order.size()=?bestMergeConfig.size() " << part_order.size() << " ?= " << bestMergeConfig.size() << endl;
+    TUtil::PrintCandidateSummary(cand);
+  }
+  assert(part_order.empty() || part_order.size()==bestMergeConfig.size());
+  for (unsigned int iord=0; iord<part_order.size(); iord++){
+    const int& index = part_order.at(iord);
+    MELAParticle*& thePart = bestMergeConfig.at(index).first;
+    if (swapconfig%2==1){
+      thePart->p4 = -thePart->p4;
+      thePart->genStatus *= -1;
+      thePart->id *= -1;
+    }
+    swapconfig = swapconfig >> 1;
+  }
+
+  // Get the modified candidate
+  SimpleParticleCollection_t associatednew;
+  {
+    SimpleParticleCollection_t daughtersnew;
+    SimpleParticleCollection_t mothersnew;
+    MELACandidate* candtmp;
+    copyCandidate(cand, candtmp, true);
+    readCandidate(candtmp, mothersnew, daughtersnew, associatednew);
+    if (mothersnew.size()!=2){
+      TUtil::PrintCandidateSummary(cand);
+      TUtil::PrintCandidateSummary(candtmp);
+      exit(1);
+    }
     delete cand; cand=candtmp;
   }
 }
