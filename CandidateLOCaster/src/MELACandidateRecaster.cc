@@ -868,13 +868,19 @@ void MELACandidateRecaster::copyCandidate(MELACandidate* cand, MELACandidate*& c
   SimpleParticleCollection_t associatednew;
   readCandidate(cand, mothersnew, daughtersnew, associatednew);
   if (adjustIncoming) adjustForIncomingMomenta(mothersnew, daughtersnew, associatednew);
+
+  TVar::CandidateDecayMode defaultHDecayMode = PDGHelpers::HDecayMode;
+  PDGHelpers::setCandidateDecayMode(cand->getDecayMode());
+
   candModified = TUtil::ConvertVectorFormat(
     &daughtersnew,
     &associatednew,
     &mothersnew,
     true,
     &extraParticles, nullptr
-    );
+  );
+
+  PDGHelpers::setCandidateDecayMode(defaultHDecayMode);
 }
 
 void MELACandidateRecaster::reduceJJtoQuarks(MELACandidate*& cand){
