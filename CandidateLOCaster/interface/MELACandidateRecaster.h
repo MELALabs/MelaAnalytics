@@ -5,10 +5,7 @@
 #include <cmath>
 #include <vector>
 #include <cstdlib>
-#include "TMath.h"
-#include "TLorentzVector.h"
-#include "TLorentzRotation.h"
-#include <ZZMatrixElement/MELA/interface/Mela.h>
+#include "Mela.h"
 
 
 class MELACandidateRecaster{

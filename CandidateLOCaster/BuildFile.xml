@@ -1,6 +1,6 @@
 <flags ADD_SUBDIR="1" />
 
-<flags CPPFLAGS="-I$(CMSSW_BASE)/src/MelaAnalytics/CandidateLOCaster/interface/" />
+<flags CPPFLAGS="-I$(CMSSW_BASE)/src/MelaAnalytics/CandidateLOCaster/interface/ -I$(CMSSW_BASE)/src/ZZMatrixElement/MELA/interface/" />
 
 <use name="root"/>
 <use name="rootmath"/>
