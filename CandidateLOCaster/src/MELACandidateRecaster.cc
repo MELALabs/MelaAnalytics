@@ -606,7 +606,7 @@ double MELACandidateRecaster::getBestVBFConfig(
 
 
 double MELACandidateRecaster::getBestHJJConfig(
-  const std::vector<pair<MELAParticle*, std::vector<MELAParticle*>>>& partons,
+  const std::vector<std::pair<MELAParticle*, std::vector<MELAParticle*>>>& partons,
   std::vector<int>* order,
   int* swapconfig
 ){
@@ -1126,7 +1126,7 @@ void MELACandidateRecaster::deduceLOVHTopology(MELACandidate*& cand){
 
 void MELACandidateRecaster::deduceLOVBFTopology(MELACandidate*& cand){ reduceJJtoQuarks(cand); }
 
-void MELACandidateRecaster::deduceLOHJJTopology(MELACandidate*& cand){
+void MELACandidateRecaster::deduceLOHJJTopology_JetMerge(MELACandidate*& cand){
   if (candScheme!=TVar::JJQCD) return;
   if (!cand) return;
 
@@ -1223,6 +1223,114 @@ void MELACandidateRecaster::deduceLOHJJTopology(MELACandidate*& cand){
   
   // Revert the momenta of incoming particles
   for (MELAParticle*& part:partons){ if (part->genStatus<0) part->p4 = -part->p4; }
+
+  // Reorder all particles
+  int swapconfig;
+  vector<int> part_order;
+  getBestHJJConfig(bestMergeConfig, &part_order, &swapconfig);
+  if (!(part_order.empty() || part_order.size()==bestMergeConfig.size())){
+    MELAerr << "part_order.empty() ? " << part_order.empty() << endl;
+    MELAerr << "part_order.size()=?bestMergeConfig.size() " << part_order.size() << " ?= " << bestMergeConfig.size() << endl;
+    TUtil::PrintCandidateSummary(cand);
+  }
+  assert(part_order.empty() || part_order.size()==bestMergeConfig.size());
+  for (unsigned int iord=0; iord<part_order.size(); iord++){
+    const int& index = part_order.at(iord);
+    MELAParticle*& thePart = bestMergeConfig.at(index).first;
+    if (swapconfig%2==1){
+      thePart->p4 = -thePart->p4;
+      thePart->genStatus *= -1;
+      thePart->id *= -1;
+    }
+    swapconfig = swapconfig >> 1;
+  }
+
+  // Get the modified candidate
+  SimpleParticleCollection_t associatednew;
+  {
+    SimpleParticleCollection_t daughtersnew;
+    SimpleParticleCollection_t mothersnew;
+    MELACandidate* candtmp;
+    copyCandidate(cand, candtmp, true);
+    readCandidate(candtmp, mothersnew, daughtersnew, associatednew);
+    if (mothersnew.size()!=2){
+      TUtil::PrintCandidateSummary(cand);
+      TUtil::PrintCandidateSummary(candtmp);
+      exit(1);
+    }
+    delete cand; cand=candtmp;
+  }
+}
+
+void MELACandidateRecaster::deduceLOHJJTopology_LeadingPt(MELACandidate*& cand){
+  if (candScheme!=TVar::JJQCD) return;
+  if (!cand) return;
+
+  // Gather all quarks and gluons
+  unsigned int nQ = 0;
+  unsigned int nG = 0;
+  vector<MELAParticle*> partons; // Only need a single collection
+                                 // Gather all mother quarks and gluons
+  for (int ip=0; ip<cand->getNMothers(); ip++){
+    MELAParticle* part = cand->getMother(ip);
+    if (PDGHelpers::isAGluon(part->id)) nG++;
+    else nQ++;
+    partons.push_back(part);
+  }
+  // Gather all associated quarks and gluons except the protected V
+  for (auto& part:cand->getAssociatedJets()){
+    if (PDGHelpers::isAGluon(part->id)) nG++;
+    else nQ++;
+    partons.push_back(part);
+  }
+
+  int nExtraJets = nQ+nG-4;
+  if (nExtraJets<0 || nQ%2==1){
+    MELAerr << "MELACandidateRecaster::deduceLOHJJTopology: (nQ, nG) = (" << nQ << ", " << nG << ") is not valid!"  << endl;
+    exit(1);
+  }
+  else if (nExtraJets==0) return;
+  else if (nExtraJets>1){
+    MELAerr << "MELACandidateRecaster::deduceLOHJJTopology: (nQ, nG) = (" << nQ << ", " << nG << ") is valid, but the implementation only supports 1 extra jet at this moment."  << endl;
+    exit(1);
+  }
+
+  vector<pair<MELAParticle*, vector<MELAParticle*>>> bestMergeConfig; bestMergeConfig.reserve(4);
+  vector<MELAParticle*> bestMissingPartons; bestMissingPartons.reserve(nExtraJets);
+  double bestScore=-99; // Picks smallest score
+
+  vector<vector<int>> partonPermutations;
+  CombinationGenerator(partons.size(), 4, partonPermutations, 0);
+  for (auto& perm:partonPermutations) std::sort(perm.begin(), perm.end()); // Sort the permutation index list such that a mother always come first
+  for (auto& perm:partonPermutations){
+    if (!(perm.at(0)==0 && perm.at(1)==1)) continue;
+
+    vector<MELAParticle*> missingPartons; missingPartons.reserve(nExtraJets);
+    for (unsigned int i=0; i<nQ+nG; i++){ if (std::find(perm.begin(), perm.end(), static_cast<int>(i))==perm.end()) missingPartons.push_back(partons.at(i)); }
+    if ((int) missingPartons.size()!=nExtraJets){
+      MELAerr << "MELACandidateRecaster::deduceLOHJJTopology: missingPartons.size() = " << missingPartons.size() << " != nExtraJets = " << nExtraJets << endl;
+      exit(1);
+    }
+
+    // Check if sum of charges of extra partons is 0.
+    {
+      float sumChargeQExtra=0;
+      for (auto const& part:missingPartons) sumChargeQExtra += part->charge();
+      if (fabs(sumChargeQExtra)>1e-5) continue;
+    }
+
+    double score=0; // Score of merge
+    for (auto const& part:missingPartons) score += part->pt();
+    if (bestScore<0. || bestScore>score){
+      bestScore = score;
+      bestMergeConfig.clear(); bestMissingPartons.clear();
+      vector<MELAParticle*> tmplist;
+      for (auto const& ipart:perm) bestMergeConfig.emplace_back(partons.at(ipart), tmplist);
+      for (MELAParticle* mpart:missingPartons) bestMissingPartons.push_back(mpart);
+    }
+  }
+
+  for (auto* mpart:bestMissingPartons) mpart->setSelected(false);
 
   // Reorder all particles
   int swapconfig;

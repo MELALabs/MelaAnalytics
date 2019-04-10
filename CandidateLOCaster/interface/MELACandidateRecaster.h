@@ -107,7 +107,8 @@ public:
 
   void deduceLOVHTopology(MELACandidate*& cand);
   void deduceLOVBFTopology(MELACandidate*& cand); // Alias for reduceJJtoQuarks
-  void deduceLOHJJTopology(MELACandidate*& cand);
+  void deduceLOHJJTopology_JetMerge(MELACandidate*& cand);
+  void deduceLOHJJTopology_LeadingPt(MELACandidate*& cand);
 
 };
 
