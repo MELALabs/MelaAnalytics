@@ -56,29 +56,33 @@ void MELAHypothesis::computeP(){
   MELACandidate* melaCand = mela->getCurrentCandidate();
   if (melaCand){
     // Set the couplings
-    // Comment: We have more couplings than we will ever need in the next 50 years!
+    // Comment: We have more couplings than we will ever need in the next 50 years, and yet we add even more every passing day!
     mela->differentiate_HWW_HZZ = opt->coupl_H.separateWWZZcouplings;
+    mela->selfDM_Zprime = opt->coupl_Vprime.M_Zprime;
+    mela->selfDGa_Zprime = opt->coupl_Vprime.Ga_Zprime;
+    mela->selfDM_Wprime = opt->coupl_Vprime.M_Wprime;
+    mela->selfDGa_Wprime = opt->coupl_Vprime.Ga_Wprime;
     for (unsigned int im=0; im<2; im++){
       //****Spin-0****//
       // First resonance parameters
-      for (int ic=0; ic<(int)SIZE_HQQ; ic++){
+      for (int ic=0; ic<(int) SIZE_HQQ; ic++){
         mela->selfDHqqcoupl[0][ic][im] = opt->coupl_H.Hqqcoupl[ic][im];
         mela->selfDHbbcoupl[0][ic][im] = opt->coupl_H.Hbbcoupl[ic][im];
         mela->selfDHttcoupl[0][ic][im] = opt->coupl_H.Httcoupl[ic][im];
         mela->selfDHb4b4coupl[0][ic][im] = opt->coupl_H.Hb4b4coupl[ic][im];
         mela->selfDHt4t4coupl[0][ic][im] = opt->coupl_H.Ht4t4coupl[ic][im];
       }
-      for (int ic=0; ic<(int)SIZE_HGG; ic++){
+      for (int ic=0; ic<(int) SIZE_HGG; ic++){
         mela->selfDHggcoupl[0][ic][im] = opt->coupl_H.Hggcoupl[ic][im];
         mela->selfDHg4g4coupl[0][ic][im] = opt->coupl_H.Hg4g4coupl[ic][im];
       }
-      for (int ic=0; ic<(int)SIZE_HVV; ic++){
+      for (int ic=0; ic<(int) SIZE_HVV; ic++){
         mela->selfDHzzcoupl[0][ic][im] = opt->coupl_H.Hzzcoupl[ic][im];
         mela->selfDHwwcoupl[0][ic][im] = opt->coupl_H.Hwwcoupl[ic][im];
       }
       if (im==0){ // Only real numbers
-        for (int iq=0; iq<(int)SIZE_HVV_CQSQ; iq++){
-          for (int ic=0; ic<(int)SIZE_HVV_LAMBDAQSQ; ic++){
+        for (int iq=0; iq<(int) SIZE_HVV_CQSQ; iq++){
+          for (int ic=0; ic<(int) SIZE_HVV_LAMBDAQSQ; ic++){
             mela->selfDHzzLambda_qsq[0][ic][iq] = opt->coupl_H.HzzLambda_qsq[ic][iq];
             mela->selfDHwwLambda_qsq[0][ic][iq] = opt->coupl_H.HwwLambda_qsq[ic][iq];
           }
@@ -87,24 +91,24 @@ void MELAHypothesis::computeP(){
         }
       }
 
-      for (int ic=0; ic<(int)SIZE_HQQ; ic++){
+      for (int ic=0; ic<(int) SIZE_HQQ; ic++){
         mela->selfDHqqcoupl[1][ic][im] = opt->coupl_H.H2qqcoupl[ic][im];
         mela->selfDHbbcoupl[1][ic][im] = opt->coupl_H.H2bbcoupl[ic][im];
         mela->selfDHttcoupl[1][ic][im] = opt->coupl_H.H2ttcoupl[ic][im];
         mela->selfDHb4b4coupl[1][ic][im] = opt->coupl_H.H2b4b4coupl[ic][im];
         mela->selfDHt4t4coupl[1][ic][im] = opt->coupl_H.H2t4t4coupl[ic][im];
       }
-      for (int ic=0; ic<(int)SIZE_HGG; ic++){
+      for (int ic=0; ic<(int) SIZE_HGG; ic++){
         mela->selfDHggcoupl[1][ic][im] = opt->coupl_H.H2ggcoupl[ic][im];
         mela->selfDHg4g4coupl[1][ic][im] = opt->coupl_H.H2g4g4coupl[ic][im];
       }
-      for (int ic=0; ic<(int)SIZE_HVV; ic++){
+      for (int ic=0; ic<(int) SIZE_HVV; ic++){
         mela->selfDHzzcoupl[1][ic][im] = opt->coupl_H.H2zzcoupl[ic][im];
         mela->selfDHwwcoupl[1][ic][im] = opt->coupl_H.H2wwcoupl[ic][im];
       }
       if (im==0){ // Only real numbers
-        for (int iq=0; iq<(int)SIZE_HVV_CQSQ; iq++){
-          for (int ic=0; ic<(int)SIZE_HVV_LAMBDAQSQ; ic++){
+        for (int iq=0; iq<(int) SIZE_HVV_CQSQ; iq++){
+          for (int ic=0; ic<(int) SIZE_HVV_LAMBDAQSQ; ic++){
             mela->selfDHzzLambda_qsq[1][ic][iq] = opt->coupl_H.H2zzLambda_qsq[ic][iq];
             mela->selfDHwwLambda_qsq[1][ic][iq] = opt->coupl_H.H2wwLambda_qsq[ic][iq];
           }
@@ -112,13 +116,20 @@ void MELAHypothesis::computeP(){
           mela->selfDHwwCLambda_qsq[1][iq] = opt->coupl_H.H2wwCLambda_qsq[iq];
         }
       }
+      //****Spin-0 - V' contact terms****//
+      for (int ic=0; ic<(int) SIZE_Vpff; ic++){
+        mela->selfDZpffcoupl[ic][im] = opt->coupl_Vprime.Zpffcoupl[ic][im];
+        mela->selfDWpffcoupl[ic][im] = opt->coupl_Vprime.Wpffcoupl[ic][im];
+      }
       //****Spin-1****//
-      for (int ic=0; ic<(int)SIZE_ZQQ; ic++) mela->selfDZqqcoupl[ic][im] = opt->coupl_Zp.Zqqcoupl[ic][im];
-      for (int ic=0; ic<(int)SIZE_ZVV; ic++) mela->selfDZvvcoupl[ic][im] = opt->coupl_Zp.Zvvcoupl[ic][im];
+      for (int ic=0; ic<(int) SIZE_ZQQ; ic++) mela->selfDZqqcoupl[ic][im] = opt->coupl_Zp.Zqqcoupl[ic][im];
+      for (int ic=0; ic<(int) SIZE_ZVV; ic++) mela->selfDZvvcoupl[ic][im] = opt->coupl_Zp.Zvvcoupl[ic][im];
       //****Spin-2****//
-      for (int ic=0; ic<(int)SIZE_GQQ; ic++) mela->selfDGqqcoupl[ic][im] = opt->coupl_X.Gqqcoupl[ic][im];
-      for (int ic=0; ic<(int)SIZE_GGG; ic++) mela->selfDGggcoupl[ic][im] = opt->coupl_X.Gggcoupl[ic][im];
-      for (int ic=0; ic<(int)SIZE_GVV; ic++) mela->selfDGvvcoupl[ic][im] = opt->coupl_X.Gvvcoupl[ic][im];
+      for (int ic=0; ic<(int) SIZE_GQQ; ic++) mela->selfDGqqcoupl[ic][im] = opt->coupl_X.Gqqcoupl[ic][im];
+      for (int ic=0; ic<(int) SIZE_GGG; ic++) mela->selfDGggcoupl[ic][im] = opt->coupl_X.Gggcoupl[ic][im];
+      for (int ic=0; ic<(int) SIZE_GVV; ic++) mela->selfDGvvcoupl[ic][im] = opt->coupl_X.Gvvcoupl[ic][im];
+      //****aTQGC****//
+      for (int ic=0; ic<(int) SIZE_ATQGC; ic++) mela->selfDaTQGCcoupl[ic][im] = opt->coupl_aTQGC.aTQGCcoupl[ic][im];
     }
     // That is a lot of them!
 
@@ -153,7 +164,7 @@ void MELAHypothesis::computeP(){
                 && tmp->getDaughter(0)->passSelection && tmp->getDaughter(1)->passSelection
                 && (PDGHelpers::isALepton(tmp->getDaughter(0)->id) || PDGHelpers::isANeutrino(tmp->getDaughter(0)->id))
                 && (PDGHelpers::isALepton(tmp->getDaughter(1)->id) || PDGHelpers::isANeutrino(tmp->getDaughter(1)->id))
-              ){
+                ){
               aV=tmp;
               break;
             }

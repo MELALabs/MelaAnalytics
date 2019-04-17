@@ -233,6 +233,14 @@ void MELAOptionParser::extractCoupling(string opt){
     &&
     wish.find("q12sq")==string::npos
     &&
+    wish.find("M_Zprime")==string::npos
+    &&
+    wish.find("Ga_Zprime")==string::npos
+    &&
+    wish.find("M_Wprime")==string::npos
+    &&
+    wish.find("Ga_Wprime")==string::npos
+    &&
     wish!="separateWWZZcouplings"
     ){
     splitOption(strVal, strValRe, strValIm, ',');
@@ -508,6 +516,70 @@ void MELAOptionParser::extractCoupling(string opt){
   else if (wish=="b9"){ coupl_X.Gvvcoupl[gGRAVITON_VV_9][0]=valRe; coupl_X.Gvvcoupl[gGRAVITON_VV_9][1]=valIm; }
   else if (wish=="b10"){ coupl_X.Gvvcoupl[gGRAVITON_VV_10][0]=valRe; coupl_X.Gvvcoupl[gGRAVITON_VV_10][1]=valIm; }
 
+  // Spin-0 - V' contact terms
+  else if (wish=="M_Zprime"){ coupl_Vprime.M_Zprime=valRe; }
+  else if (wish=="Ga_Zprime"){ coupl_Vprime.Ga_Zprime=valRe; }
+  else if (wish=="M_Wprime"){ coupl_Vprime.M_Wprime=valRe; }
+  else if (wish=="Ga_Wprime"){ coupl_Vprime.Ga_Wprime=valRe; }
+
+  else if (wish=="ezp_El_left"){ coupl_Vprime.SetVpffCouplings(gHIGGS_Vp_El_left, valRe, valIm, false); }
+  else if (wish=="ezp_El_right"){ coupl_Vprime.SetVpffCouplings(gHIGGS_Vp_El_right, valRe, valIm, false); }
+  else if (wish=="ezp_Mu_left"){ coupl_Vprime.SetVpffCouplings(gHIGGS_Vp_Mu_left, valRe, valIm, false); }
+  else if (wish=="ezp_Mu_right"){ coupl_Vprime.SetVpffCouplings(gHIGGS_Vp_Mu_right, valRe, valIm, false); }
+  else if (wish=="ezp_Ta_left"){ coupl_Vprime.SetVpffCouplings(gHIGGS_Vp_Ta_left, valRe, valIm, false); }
+  else if (wish=="ezp_Ta_right"){ coupl_Vprime.SetVpffCouplings(gHIGGS_Vp_Ta_right, valRe, valIm, false); }
+  else if (wish=="ezp_NuE_left"){ coupl_Vprime.SetVpffCouplings(gHIGGS_Vp_NuE_left, valRe, valIm, false); }
+  else if (wish=="ezp_NuE_right"){ coupl_Vprime.SetVpffCouplings(gHIGGS_Vp_NuE_right, valRe, valIm, false); }
+  else if (wish=="ezp_Dn_left"){ coupl_Vprime.SetVpffCouplings(gHIGGS_Vp_Dn_left, valRe, valIm, false); }
+  else if (wish=="ezp_Dn_right"){ coupl_Vprime.SetVpffCouplings(gHIGGS_Vp_Dn_right, valRe, valIm, false); }
+  else if (wish=="ezp_Up_left"){ coupl_Vprime.SetVpffCouplings(gHIGGS_Vp_Up_left, valRe, valIm, false); }
+  else if (wish=="ezp_Up_right"){ coupl_Vprime.SetVpffCouplings(gHIGGS_Vp_Up_right, valRe, valIm, false); }
+  else if (wish=="ezp_Str_left"){ coupl_Vprime.SetVpffCouplings(gHIGGS_Vp_Str_left, valRe, valIm, false); }
+  else if (wish=="ezp_Str_right"){ coupl_Vprime.SetVpffCouplings(gHIGGS_Vp_Str_right, valRe, valIm, false); }
+  else if (wish=="ezp_Chm_left"){ coupl_Vprime.SetVpffCouplings(gHIGGS_Vp_Chm_left, valRe, valIm, false); }
+  else if (wish=="ezp_Chm_right"){ coupl_Vprime.SetVpffCouplings(gHIGGS_Vp_Chm_right, valRe, valIm, false); }
+  else if (wish=="ezp_Bot_left"){ coupl_Vprime.SetVpffCouplings(gHIGGS_Vp_Bot_left, valRe, valIm, false); }
+  else if (wish=="ezp_Bot_right"){ coupl_Vprime.SetVpffCouplings(gHIGGS_Vp_Bot_right, valRe, valIm, false); }
+  else if (wish=="ezp_Top_left"){ coupl_Vprime.SetVpffCouplings(gHIGGS_Vp_Top_left, valRe, valIm, false); }
+  else if (wish=="ezp_Top_right"){ coupl_Vprime.SetVpffCouplings(gHIGGS_Vp_Top_right, valRe, valIm, false); }
+
+  else if (wish=="ewp_El_left"){ coupl_Vprime.SetVpffCouplings(gHIGGS_Vp_El_left, valRe, valIm, true); }
+  else if (wish=="ewp_El_right"){ coupl_Vprime.SetVpffCouplings(gHIGGS_Vp_El_right, valRe, valIm, true); }
+  else if (wish=="ewp_Mu_left"){ coupl_Vprime.SetVpffCouplings(gHIGGS_Vp_Mu_left, valRe, valIm, true); }
+  else if (wish=="ewp_Mu_right"){ coupl_Vprime.SetVpffCouplings(gHIGGS_Vp_Mu_right, valRe, valIm, true); }
+  else if (wish=="ewp_Ta_left"){ coupl_Vprime.SetVpffCouplings(gHIGGS_Vp_Ta_left, valRe, valIm, true); }
+  else if (wish=="ewp_Ta_right"){ coupl_Vprime.SetVpffCouplings(gHIGGS_Vp_Ta_right, valRe, valIm, true); }
+  //else if (wish=="ewp_NuE_left"){ coupl_Vprime.SetVpffCouplings(gHIGGS_Vp_NuE_left, valRe, valIm, true); }
+  //else if (wish=="ewp_NuE_right"){ coupl_Vprime.SetVpffCouplings(gHIGGS_Vp_NuE_right, valRe, valIm, true); }
+  //else if (wish=="ewp_Dn_left"){ coupl_Vprime.SetVpffCouplings(gHIGGS_Vp_Dn_left, valRe, valIm, true); }
+  //else if (wish=="ewp_Dn_right"){ coupl_Vprime.SetVpffCouplings(gHIGGS_Vp_Dn_right, valRe, valIm, true); }
+  else if (wish=="ewp_Up_left"){ coupl_Vprime.SetVpffCouplings(gHIGGS_Vp_Up_left, valRe, valIm, true); }
+  else if (wish=="ewp_Up_right"){ coupl_Vprime.SetVpffCouplings(gHIGGS_Vp_Up_right, valRe, valIm, true); }
+  //else if (wish=="ewp_Str_left"){ coupl_Vprime.SetVpffCouplings(gHIGGS_Vp_Str_left, valRe, valIm, true); }
+  //else if (wish=="ewp_Str_right"){ coupl_Vprime.SetVpffCouplings(gHIGGS_Vp_Str_right, valRe, valIm, true); }
+  else if (wish=="ewp_Chm_left"){ coupl_Vprime.SetVpffCouplings(gHIGGS_Vp_Chm_left, valRe, valIm, true); }
+  else if (wish=="ewp_Chm_right"){ coupl_Vprime.SetVpffCouplings(gHIGGS_Vp_Chm_right, valRe, valIm, true); }
+  //else if (wish=="ewp_Bot_left"){ coupl_Vprime.SetVpffCouplings(gHIGGS_Vp_Bot_left, valRe, valIm, true); }
+  //else if (wish=="ewp_Bot_right"){ coupl_Vprime.SetVpffCouplings(gHIGGS_Vp_Bot_right, valRe, valIm, true); }
+  else if (wish=="ewp_Top_left"){ coupl_Vprime.SetVpffCouplings(gHIGGS_Vp_Top_left, valRe, valIm, true); }
+  else if (wish=="ewp_Top_right"){ coupl_Vprime.SetVpffCouplings(gHIGGS_Vp_Top_right, valRe, valIm, true); }
+
+  // aTQGC
+  else if (wish=="dV_A"){ coupl_aTQGC.aTQGCcoupl[gATQGC_dVA][0]=valRe; coupl_aTQGC.aTQGCcoupl[gATQGC_dVA][1]=valIm; }
+  else if (wish=="dP_A"){ coupl_aTQGC.aTQGCcoupl[gATQGC_dPA][0]=valRe; coupl_aTQGC.aTQGCcoupl[gATQGC_dPA][1]=valIm; }
+  else if (wish=="dM_A"){ coupl_aTQGC.aTQGCcoupl[gATQGC_dMA][0]=valRe; coupl_aTQGC.aTQGCcoupl[gATQGC_dMA][1]=valIm; }
+  else if (wish=="dFour_A"){ coupl_aTQGC.aTQGCcoupl[gATQGC_dFourA][0]=valRe; coupl_aTQGC.aTQGCcoupl[gATQGC_dFourA][1]=valIm; }
+
+  else if (wish=="dV_Z"){ coupl_aTQGC.aTQGCcoupl[gATQGC_dVZ][0]=valRe; coupl_aTQGC.aTQGCcoupl[gATQGC_dVZ][1]=valIm; }
+  else if (wish=="dP_Z"){ coupl_aTQGC.aTQGCcoupl[gATQGC_dPZ][0]=valRe; coupl_aTQGC.aTQGCcoupl[gATQGC_dPZ][1]=valIm; }
+  else if (wish=="dM_Z"){ coupl_aTQGC.aTQGCcoupl[gATQGC_dMZ][0]=valRe; coupl_aTQGC.aTQGCcoupl[gATQGC_dMZ][1]=valIm; }
+  else if (wish=="dFour_Z"){ coupl_aTQGC.aTQGCcoupl[gATQGC_dFourZ][0]=valRe; coupl_aTQGC.aTQGCcoupl[gATQGC_dFourZ][1]=valIm; }
+
+  else if (wish=="dAAWpWm"){ coupl_aTQGC.aTQGCcoupl[gATQGC_dAAWpWm][0]=valRe; coupl_aTQGC.aTQGCcoupl[gATQGC_dAAWpWm][1]=valIm; }
+  else if (wish=="dZAWpWm"){ coupl_aTQGC.aTQGCcoupl[gATQGC_dZAWpWm][0]=valRe; coupl_aTQGC.aTQGCcoupl[gATQGC_dZAWpWm][1]=valIm; }
+  else if (wish=="dZZWpWm"){ coupl_aTQGC.aTQGCcoupl[gATQGC_dZZWpWm][0]=valRe; coupl_aTQGC.aTQGCcoupl[gATQGC_dZZWpWm][1]=valIm; }
+
+
   else cerr << "MELAOptionParser::extractCoupling: Coupling " << wish << " is not supported!" << endl;
 }
 
@@ -566,8 +638,10 @@ void MELAOptionParser::pickOriginalOptions(MELAOptionParser* original_opt){
   h2width = original_opt->h2width;
 
   coupl_H.copy(original_opt->coupl_H);
+  coupl_Vprime.copy(original_opt->coupl_Vprime);
   coupl_Zp.copy(original_opt->coupl_Zp);
   coupl_X.copy(original_opt->coupl_X);
+  coupl_aTQGC.copy(original_opt->coupl_aTQGC);
 
   couplingsString = original_opt->couplingsString;
 

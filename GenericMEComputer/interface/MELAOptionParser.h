@@ -82,8 +82,10 @@ public:
   Float_t h2width;
 
   SpinZeroCouplings coupl_H;
+  VprimeCouplings coupl_Vprime;
   SpinOneCouplings coupl_Zp;
   SpinTwoCouplings coupl_X;
+  aTQGCCouplings coupl_aTQGC;
 
   MELAOptionParser(std::string stropts);
   ~MELAOptionParser(){}
