@@ -16,6 +16,7 @@ protected:
   std::vector<MELAParticle*> photons;
   std::vector<MELAParticle*> jets;
   std::vector<MELAParticle*> mothers;
+  std::vector<MELATopCandidate_t*> topcandidates;
   std::vector<MELACandidate*> candidates;
 
   double xsec;
@@ -42,11 +43,13 @@ public:
 
 
   void constructVVCandidates(int isZZ=1, int fstype=0);
+  void constructTopCandidates();
   void applyParticleSelection();
   void addVVCandidateAppendages();
 
 
   int getNCandidates() const{ return candidates.size(); }
+  int getNTopCandidates() const{ return topcandidates.size(); }
   int getNLeptons() const{ return leptons.size(); }
   int getNNeutrinos() const{ return neutrinos.size(); }
   int getNPhotons() const{ return photons.size(); }
@@ -55,7 +58,8 @@ public:
   int getNIntermediates() const{ return intermediates.size(); }
   int getNParticles() const{ return particles.size(); }
 
-  MELACandidate* getMELACandidate(int index) const;
+  MELACandidate* getCandidate(int index) const;
+  MELATopCandidate_t* getTopCandidate(int index) const;
   MELAParticle* getLepton(int index) const;
   MELAParticle* getNeutrino(int index) const;
   MELAParticle* getPhoton(int index) const;
@@ -65,6 +69,7 @@ public:
   MELAParticle* getParticle(int index) const;
 
   const std::vector<MELACandidate*>& getCandidates() const{ return candidates; }
+  const std::vector<MELATopCandidate_t*>& getTopCandidates() const{ return topcandidates; }
   const std::vector<MELAParticle*>& getLeptons() const{ return leptons; }
   const std::vector<MELAParticle*>& getNeutrinos() const{ return neutrinos; }
   const std::vector<MELAParticle*>& getPhotons() const{ return photons; }
@@ -74,6 +79,7 @@ public:
   const std::vector<MELAParticle*>& getParticles() const{ return particles; }
 
   std::vector<MELACandidate*>& getCandidates(){ return candidates; }
+  std::vector<MELATopCandidate_t*>& getTopCandidates(){ return topcandidates; }
   std::vector<MELAParticle*>& getLeptons(){ return leptons; }
   std::vector<MELAParticle*>& getNeutrinos(){ return neutrinos; }
   std::vector<MELAParticle*>& getPhotons(){ return photons; }
@@ -92,16 +98,18 @@ public:
   TLorentzVector missingP() const;
 
 protected:
-  void addMELACandidate(MELACandidate*& myParticle); // Protected to avoid adding external MELACandidates and DELETING THEM TWICE!
+  void addCandidate(MELACandidate*& myParticle); // Protected to avoid adding external MELACandidates and DELETING THEM TWICE!
+  void addTopCandidate(MELATopCandidate_t*& myParticle); // Protected to avoid adding external MELATopCandidates and DELETING THEM TWICE!
 
-  template<typename ParticleType> void wipeArray(std::vector<ParticleType*>& particleArray, bool doDelete=true){ if (doDelete){ for (unsigned int i=0; i<particleArray.size(); i++){ ParticleType* delpar = particleArray.at(i); delete delpar; } } particleArray.clear(); };
-  void wipeAll(){ leptons.clear(); neutrinos.clear(); photons.clear(); jets.clear(); wipeArray(candidates, true); wipeArray(intermediates, false); wipeArray(particles, false); };
+  template<typename ParticleType> void wipeArray(std::vector<ParticleType*>& particleArray, bool doDelete=true){ if (doDelete){ for (ParticleType*& delpar:particleArray) delete delpar; } particleArray.clear(); }
+  void wipeAll();
 
   void applyLeptonSelection();
   void applyNeutrinoSelection();
   void applyPhotonSelection();
   void applyJetSelection();
-  void applyZZSelection();
+  void applyTopCandidateSelection();
+  void applyCandidateSelection();
 
 };
 

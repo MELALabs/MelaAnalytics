@@ -1,19 +1,22 @@
 #include "HiggsComparators.h"
+#include "MELAStreamHelpers.hh"
+
 
 MELACandidate* HiggsComparators::matchAHiggsToParticle(MELAEvent& ev, MELAParticle* genH){
-  MELACandidate* cand=0;
-  for (int t=0; t<ev.getNCandidates(); t++){
-    MELACandidate* tmpCand = ev.getMELACandidate(t);
-    double genhmassquant = genH->m()+genH->pt()+fabs(genH->z());
-    double massdiff = fabs(genhmassquant-tmpCand->m()-tmpCand->pt()-fabs(tmpCand->z()));
+  MELACandidate* cand=nullptr;
+  if (!genH) return cand;
+  for (MELACandidate* tmpCand:ev.getCandidates()){
+    if (!tmpCand) continue;
+    double genmassquant = genH->m()+genH->pt()+fabs(genH->z());
+    double massdiff = fabs(genmassquant-tmpCand->m()-tmpCand->pt()-fabs(tmpCand->z()));
     double massratio = 0;
-    if (genhmassquant>0) massratio = massdiff / genhmassquant;
+    if (genmassquant>0.) massratio = massdiff / genmassquant;
     if (massratio<0.001){
-      if (cand==0) cand = tmpCand;
+      if (!cand) cand = tmpCand;
       else{
-        TLorentzVector vGen = genH->p4;
-        TLorentzVector vTmp = tmpCand->p4;
-        TLorentzVector vCur = cand->p4;
+        TLorentzVector const& vGen = genH->p4;
+        TLorentzVector const& vTmp = tmpCand->p4;
+        TLorentzVector const& vCur = cand->p4;
 
         double dot_tmp = vTmp.Dot(vGen);
         double dot_curr = vCur.Dot(vGen);
@@ -25,8 +28,9 @@ MELACandidate* HiggsComparators::matchAHiggsToParticle(MELAEvent& ev, MELAPartic
 }
 
 MELACandidate* HiggsComparators::candidateSelector(MELAEvent& ev, HiggsComparators::CandidateSelection scheme, int isZZ){
-  MELACandidate* cand=0;
+  MELACandidate* cand=nullptr;
   for (MELACandidate* tmpCand:ev.getCandidates()){
+    if (!tmpCand) continue;
     if (!tmpCand->passSelection) continue;
     if (!cand) cand=tmpCand;
     else cand = HiggsComparators::candComparator(cand, tmpCand, scheme, isZZ);
@@ -35,7 +39,11 @@ MELACandidate* HiggsComparators::candidateSelector(MELAEvent& ev, HiggsComparato
 }
 
 MELACandidate* HiggsComparators::candComparator(MELACandidate* cand1, MELACandidate* cand2, HiggsComparators::CandidateSelection scheme, int isZZ){
-  MELACandidate* theChosenOne=0;
+  MELACandidate* theChosenOne=nullptr;
+
+  if (!cand1 && !cand2) return theChosenOne;
+  else if (cand1 && !cand2) return cand1;
+  else if (!cand1 && cand2) return cand2;
 
   TVar::CandidateDecayMode defaultHDecayMode = PDGHelpers::HDecayMode;
   if (isZZ==0) PDGHelpers::setCandidateDecayMode(TVar::CandidateDecay_WW);
@@ -81,6 +89,7 @@ MELACandidate* HiggsComparators::candComparator(MELACandidate* cand1, MELACandid
       ) theChosenOne = cand2;
     else theChosenOne = cand1;
   }
+  else MELAStreamHelpers::MELAerr << "HiggsComparators::candComparator: Scheme " << scheme << " is not defined!" << std::endl;
 
   PDGHelpers::setCandidateDecayMode(defaultHDecayMode);
   return theChosenOne;
