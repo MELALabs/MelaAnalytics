@@ -64,7 +64,7 @@ MELATopCandidate_t* TopComparators::candComparator(MELATopCandidate_t* cand1, ME
       BWinv1 *= pow(pow(mW1*GeVunit, 2)-mWsq, 2)+mW_GaWsq;
       BWinv2 *= pow(pow(mW2*GeVunit, 2)-mWsq, 2)+mW_GaWsq;
     }
-    theChosenOne = (BWinv1>=BWinv2 ? cand1 : cand2);
+    theChosenOne = (BWinv1<=BWinv2 ? cand1 : cand2);
   }
   else MELAStreamHelpers::MELAerr << "TopComparators::candComparator: Scheme " << scheme << " is not defined!" << std::endl;
 
