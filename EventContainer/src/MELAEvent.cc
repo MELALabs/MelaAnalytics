@@ -207,6 +207,13 @@ void MELAEvent::constructVVCandidates(int isZZ, int fstype){
     if ((*it)->id<0) iSecond=1;
     quarkAntiquark[iFirst][iSecond].push_back(*it);
   }
+  for (auto* top:topcandidates){ // Tops
+    int iFirst=abs(top->id); // 0 or 6
+    if (!PDGHelpers::isAnUnknownJet(iFirst) && !PDGHelpers::isATopQuark(iFirst)) continue;
+    int iSecond=0;
+    if (top->id<0) iSecond=1;
+    quarkAntiquark[iFirst][iSecond].push_back(top);
+  }
 
   std::vector<MELAParticle*> tmpVhandle;
 
@@ -216,6 +223,7 @@ void MELAEvent::constructVVCandidates(int isZZ, int fstype){
       for (int c=0; c<3; c++){
         for (MELAParticle* F1:lepMinusPlus[c][0]){
           for (MELAParticle* F2:lepMinusPlus[c][1]){
+            if (MELAParticle::checkDeepDaughtership(F1, F2)) continue;
             TLorentzVector pV = F1->p4 + F2->p4;
             MELAParticle* V = new MELAParticle(23, pV);
             V->addDaughter(F1);
@@ -229,6 +237,7 @@ void MELAEvent::constructVVCandidates(int isZZ, int fstype){
       for (int c=0; c<3; c++){
         for (MELAParticle* F1:lepNuNubar[c][0]){
           for (MELAParticle* F2:lepNuNubar[c][1]){
+            if (MELAParticle::checkDeepDaughtership(F1, F2)) continue;
             TLorentzVector pV = F1->p4 + F2->p4;
             MELAParticle* V = new MELAParticle(23, pV);
             V->addDaughter(F1);
@@ -242,6 +251,7 @@ void MELAEvent::constructVVCandidates(int isZZ, int fstype){
       for (int c=1; c<7; c++){
         for (MELAParticle* F1:quarkAntiquark[c][0]){
           for (MELAParticle* F2:quarkAntiquark[c][1]){
+            if (MELAParticle::checkDeepDaughtership(F1, F2)) continue;
             TLorentzVector pV = F1->p4 + F2->p4;
             MELAParticle* V = new MELAParticle(23, pV);
             V->addDaughter(F1);
@@ -260,6 +270,7 @@ void MELAEvent::constructVVCandidates(int isZZ, int fstype){
         for (int signW=0; signW<2; signW++){ // ==0: W+, ==1: W-
           for (MELAParticle* F1:lepMinusPlus[c][1-signW]){
             for (MELAParticle* F2:lepNuNubar[c][signW]){
+              if (MELAParticle::checkDeepDaughtership(F1, F2)) continue;
               TLorentzVector pV = F1->p4 + F2->p4;
               MELAParticle* V = new MELAParticle(24*(1-2*signW), pV);
               V->addDaughter(F1);
@@ -276,6 +287,7 @@ void MELAEvent::constructVVCandidates(int isZZ, int fstype){
           if (d==c) continue;
           for (MELAParticle* F1:quarkAntiquark[c][0]){
             for (MELAParticle* F2:quarkAntiquark[d][1]){
+              if (MELAParticle::checkDeepDaughtership(F1, F2)) continue;
               int totalcharge = F1->charge() + F2->charge();
               if (abs(totalcharge)!=1) continue;
 
@@ -296,6 +308,7 @@ void MELAEvent::constructVVCandidates(int isZZ, int fstype){
       for (int c=0; c<3; c++){
         for (MELAParticle* F1:lepMinusPlus[c][0]){
           for (MELAParticle* F2:lepMinusPlus[c][1]){
+            if (MELAParticle::checkDeepDaughtership(F1, F2)) continue;
             TLorentzVector pH = F1->p4+F2->p4;
             MELACandidate* cand = new MELACandidate(25, pH, true);
             cand->addDaughter(F1);
@@ -314,6 +327,7 @@ void MELAEvent::constructVVCandidates(int isZZ, int fstype){
       for (int c=1; c<7; c++){
         for (MELAParticle* F1:quarkAntiquark[c][0]){
           for (MELAParticle* F2:quarkAntiquark[c][1]){
+            if (MELAParticle::checkDeepDaughtership(F1, F2)) continue;
             TLorentzVector pH = F1->p4+F2->p4;
             MELACandidate* cand = new MELACandidate(25, pH, true);
             cand->addDaughter(F1);
@@ -336,6 +350,7 @@ void MELAEvent::constructVVCandidates(int isZZ, int fstype){
       for (int c=0; c<3; c++){
         for (MELAParticle* F1:lepMinusPlus[c][0]){
           for (MELAParticle* F2:lepMinusPlus[c][1]){
+            if (MELAParticle::checkDeepDaughtership(F1, F2)) continue;
             TLorentzVector pCand = F1->p4 + F2->p4;
             MELACandidate* cand = new MELACandidate(23, pCand, true);
             cand->addDaughter(F1);
@@ -354,6 +369,7 @@ void MELAEvent::constructVVCandidates(int isZZ, int fstype){
       for (int c=1; c<7; c++){
         for (MELAParticle* F1:quarkAntiquark[c][0]){
           for (MELAParticle* F2:quarkAntiquark[c][1]){
+            if (MELAParticle::checkDeepDaughtership(F1, F2)) continue;
             TLorentzVector pCand = F1->p4 + F2->p4;
             MELACandidate* cand = new MELACandidate(23, pCand, true);
             cand->addDaughter(F1);
@@ -372,6 +388,7 @@ void MELAEvent::constructVVCandidates(int isZZ, int fstype){
       for (int c=0; c<3; c++){
         for (MELAParticle* F1:lepNuNubar[c][0]){
           for (MELAParticle* F2:lepNuNubar[c][1]){
+            if (MELAParticle::checkDeepDaughtership(F1, F2)) continue;
             TLorentzVector pCand = F1->p4 + F2->p4;
             MELACandidate* cand = new MELACandidate(23, pCand, true);
             cand->addDaughter(F1);
@@ -430,6 +447,8 @@ void MELAEvent::constructVVCandidates(int isZZ, int fstype){
         if (it1==it2) continue;
         MELAParticle* F2 = *it2;
         if (F2->id!=0) continue;
+
+        if (MELAParticle::checkDeepDaughtership(F1, F2)) continue;
 
         if (isZZ==0 || isZZ==1 || isZZ==3){
           TLorentzVector pV = F1->p4 + F2->p4;
@@ -591,6 +610,7 @@ void MELAEvent::constructTopCandidates(){
     for (int signW=0; signW<2; signW++){ // ==0: W+, ==1: W-
       for (MELAParticle* F1:lepMinusPlus[c][1-signW]){
         for (MELAParticle* F2:lepNuNubar[c][signW]){
+          if (MELAParticle::checkDeepDaughtership(F1, F2)) continue;
           TLorentzVector pV = F1->p4 + F2->p4;
           MELAParticle* V = new MELAParticle(24*(1-2*signW), pV);
           V->addDaughter(F1);
@@ -605,6 +625,7 @@ void MELAEvent::constructTopCandidates(){
       if (d==c) continue;
       for (MELAParticle* F1:quarkAntiquark[c][0]){
         for (MELAParticle* F2:quarkAntiquark[d][1]){
+          if (MELAParticle::checkDeepDaughtership(F1, F2)) continue;
           int totalcharge = F1->charge() + F2->charge();
           if (abs(totalcharge)!=1) continue;
 
@@ -627,6 +648,8 @@ void MELAEvent::constructTopCandidates(){
       MELAParticle* F2 = *it2;
       if (F2->id!=0) continue;
 
+      if (MELAParticle::checkDeepDaughtership(F1, F2)) continue;
+
       TLorentzVector pV = F1->p4 + F2->p4;
       MELAParticle* V = new MELAParticle(0, pV);
       V->addDaughter(F1);
@@ -645,7 +668,7 @@ void MELAEvent::constructTopCandidates(){
         for (MELAParticle* partV:tmpVhandle){
           //if (partV->id==0) continue;
           if (partV->charge()*quark->charge()>0.) continue;
-          if (partV->hasDaughter(quark)) continue;
+          if (MELAParticle::checkDeepDaughtership(partV, quark)) continue;
 
           MELATopCandidate_t* cand = new MELATopCandidate_t(6*(1-2*qaq), (partV->p4+quark->p4));
           cand->setPartnerParticle(quark);
@@ -661,7 +684,7 @@ void MELAEvent::constructTopCandidates(){
   // Match reco. jets to reco. Vs
   for (MELAParticle* quark:quarkAntiquark[0][0]){
     for (MELAParticle* partV:tmpVhandle){
-      if (partV->hasDaughter(quark)) continue;
+      if (MELAParticle::checkDeepDaughtership(partV, quark)) continue;
       //if (PDGHelpers::isAQuark(partV->getDaughter(0)) || PDGHelpers::isAQuark(partV->getDaughter(1))) continue;
 
       MELATopCandidate_t* cand = new MELATopCandidate_t(0, (partV->p4+quark->p4));
