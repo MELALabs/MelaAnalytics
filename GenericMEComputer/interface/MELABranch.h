@@ -26,6 +26,13 @@ namespace BranchHelpers{
       );
     virtual ~MELABranch(){}
 
+    // Follows from ExtendedBranch implementation
+    MELABranch() = delete;
+    MELABranch(MELABranch const&) = delete;
+    MELABranch& operator=(MELABranch const&) = delete;
+    MELABranch(MELABranch&& other) = delete;
+    MELABranch& operator=(MELABranch&& other) = delete;
+
     // This function should be run after MELAComputation classes are all "update"d.
     void setVal();
 

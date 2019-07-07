@@ -1,5 +1,6 @@
 #include "MELABranch.h"
 
+
 using namespace BranchHelpers;
 using namespace std;
 
@@ -19,13 +20,13 @@ MELABranch::MELABranch(
 }
 
 void MELABranch::setVal(){
-  if (computer!=0) ExtendedBranch::setValue(computer->getVal(valtype));
+  if (computer) ExtendedBranch::setValue(computer->getVal(valtype));
 }
 
 void MELABranch::Print(){
   ExtendedBranch::Print();
   cout << "\tMELABranch extras:" << endl;
   cout << "\tME type=" << valtype << endl;
-  if (computer!=0) computer->Print();
+  if (computer) computer->Print();
   cout << "**********" << endl;
 }
