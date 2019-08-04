@@ -8,32 +8,36 @@
 
 namespace ParticleComparators{
   extern double jetDeltaR;
-  extern double jetEtaAcceptanceCut;
-  extern double jetPTCut;
-  extern double electronEtaAcceptanceCut;
-  extern double electronPTCut;
-  extern double muonEtaAcceptanceCut;
-  extern double muonPTCut;
+  extern double jetEtaCut;
+  extern double jetPtCut;
+  extern double electronEtaCut;
+  extern double electronPtCut;
+  extern double muonEtaCut;
+  extern double muonPtCut;
   extern double ghostDeltaRCut;
 
   extern double mV1LowCut;
   extern double mV2LowCut;
   extern double mllLowCut;
-  extern double mV12HighCut;
+  extern double mV1HighCut;
+  extern double mV2HighCut;
+  extern double mllHighCut;
 
   void setJetDeltaR(double cut);
-  void setJetEtaAcceptanceCut(double cut);
-  void setJetPTCut(double cut);
-  void setElectronEtaAcceptanceCut(double cut);
-  void setElectronPTCut(double cut);
-  void setMuonEtaAcceptanceCut(double cut);
-  void setMuonPTCut(double cut);
+  void setJetEtaCut(double cut);
+  void setJetPtCut(double cut);
+  void setElectronEtaCut(double cut);
+  void setElectronPtCut(double cut);
+  void setMuonEtaCut(double cut);
+  void setMuonPtCut(double cut);
   void setGhostDeltaRCut(double cut);
 
   void setMV1LowCut(double cut);
   void setMV2LowCut(double cut);
   void setMllLowCut(double cut);
-  void setMV12HighCut(double cut);
+  void setMV1HighCut(double cut);
+  void setMV2HighCut(double cut);
+  void setMllHighCut(double cut);
 }
 
 #endif

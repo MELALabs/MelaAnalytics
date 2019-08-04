@@ -2,12 +2,27 @@
 #define EVENTBASE_H
 
 #include <vector>
+#include <string>
 #include "TLorentzVector.h"
 #include "ParticleComparators.h"
 #include "MELACandidate.h"
 
 
 class MELAEvent{
+public:
+  enum CandidateVVMode{
+    UndecayedMode,
+    WWMode,
+    ZZMode,
+    YukawaMode,
+    ZGammaMode,
+    GammaGammaMode,
+    ZJetsMode,
+    nCandidateVVModes
+  };
+  static MELAEvent::CandidateVVMode getCandidateVVModeFromString(std::string const& s);
+  static void printCandidateDecayModeDescriptions();
+
 protected:
   std::vector<MELAParticle*> particles;
   std::vector<MELAParticle*> intermediates;
@@ -42,7 +57,7 @@ public:
   double getXSec() const{ return xsec; }
 
 
-  void constructVVCandidates(int isZZ=1, int fstype=0);
+  void constructVVCandidates(CandidateVVMode VVmode, int fstype);
   void constructTopCandidates();
   void applyParticleSelection();
   void addVVCandidateAppendages();

@@ -11,8 +11,8 @@ namespace HiggsComparators{
   };
 
   MELACandidate* matchAHiggsToParticle(MELAEvent& ev, MELAParticle* genH);
-  MELACandidate* candidateSelector(MELAEvent& ev, HiggsComparators::CandidateSelection scheme, int isZZ);
-  MELACandidate* candComparator(MELACandidate* cand1, MELACandidate* cand2, HiggsComparators::CandidateSelection scheme, int isZZ);
+  MELACandidate* candidateSelector(MELAEvent& ev, HiggsComparators::CandidateSelection scheme, MELAEvent::CandidateVVMode VVMode);
+  MELACandidate* candComparator(MELACandidate* cand1, MELACandidate* cand2, HiggsComparators::CandidateSelection scheme, MELAEvent::CandidateVVMode VVMode);
 }
 
 #endif

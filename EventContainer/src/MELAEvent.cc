@@ -1,4 +1,6 @@
+#include <cassert>
 #include <iostream>
+#include <algorithm>
 #include "MELAEvent.h"
 #include "TopComparators.h"
 #include "MELAStreamHelpers.hh"
@@ -20,8 +22,8 @@ void MELAEvent::applyLeptonSelection(){
   for (std::vector<MELAParticle*>::iterator it = leptons.begin(); it!=leptons.end(); it++){
     // Trigger and acceptance
     bool passAcceptance = true;
-    if (std::abs((*it)->id)==11 && ((*it)->pt()<=electronPTCut || std::abs((*it)->eta())>=electronEtaAcceptanceCut)) passAcceptance = false;
-    else if (std::abs((*it)->id)==13 && ((*it)->pt()<=muonPTCut || std::abs((*it)->eta())>=muonEtaAcceptanceCut)) passAcceptance = false;
+    if (std::abs((*it)->id)==11 && ((*it)->pt()<=electronPtCut || std::abs((*it)->eta())>=electronEtaCut)) passAcceptance = false;
+    else if (std::abs((*it)->id)==13 && ((*it)->pt()<=muonPtCut || std::abs((*it)->eta())>=muonEtaCut)) passAcceptance = false;
     else if (std::abs((*it)->id)==15) passAcceptance = false;
     for (std::vector<MELAParticle*>::iterator it2 = leptons.begin(); it2<leptons.end(); it2++){
       if ((*it2)==(*it)) continue; // Every particle is their own ghost.
@@ -39,7 +41,7 @@ void MELAEvent::applyPhotonSelection(){
 void MELAEvent::applyJetSelection(){
   for (std::vector<MELAParticle*>::iterator it = jets.begin(); it!=jets.end(); it++){
     bool passAcceptance = true;
-    if ((*it)->pt()<=jetPTCut || std::abs((*it)->eta())>=jetEtaAcceptanceCut) passAcceptance = false; // ZZ4l selection and acceptance
+    if ((*it)->pt()<=jetPtCut || std::abs((*it)->eta())>=jetEtaCut) passAcceptance = false; // ZZ4l selection and acceptance
     for (std::vector<MELAParticle*>::iterator it2 = leptons.begin(); it2<leptons.end(); it2++){ // Clean from selected leptons
       if ((*it2)->passSelection){ // If it is not selected at all, why would I care?
         if ((*it)->deltaR((*it2)->p4)<=jetDeltaR) passAcceptance = false;
@@ -60,16 +62,20 @@ void MELAEvent::applyCandidateSelection(){
     if (!(*it)->passSelection) continue;
 
     bool passAcceptance = true;
-    if ((*it)->getSortedV(0)->m()<=mV1LowCut || (*it)->getSortedV(0)->m()>=mV12HighCut){
+    if ((*it)->getSortedV(0) && ((*it)->getSortedV(0)->m()<=mV1LowCut || (*it)->getSortedV(0)->m()>=mV1HighCut)){
       passAcceptance = false; (*it)->getSortedV(0)->setSelected(passAcceptance);
     } // Z1 selection
-    if ((*it)->getSortedV(1)->m()<=mV2LowCut || (*it)->getSortedV(1)->m()>=mV12HighCut){
+    if ((*it)->getSortedV(1) && ((*it)->getSortedV(1)->m()<=mV2LowCut || (*it)->getSortedV(1)->m()>=mV2HighCut)){
       passAcceptance = false; (*it)->getSortedV(1)->setSelected(passAcceptance);
     } // Z2 selection
     for (MELAParticle* extraV:(*it)->getSortedVs()){
       if (!isAZBoson(extraV->id)) continue;
-      else{
-        if (extraV->m()<=mllLowCut || extraV->m()>=mV12HighCut || (extraV->getDaughter(0)!=0 && isANeutrino(extraV->getDaughter(0)->id))) extraV->setSelected(false); // Extra Z selection, no effect on ZZ candidate
+      else if (extraV->getDaughter(0)){
+        if (
+          (isALepton(extraV->getDaughter(0)->id) && (extraV->m()<=mllLowCut || extraV->m()>=mllHighCut))
+          ||
+          (isANeutrino(extraV->getDaughter(0)->id))
+          ) extraV->setSelected(false); // Extra Z selection, no effect on ZZ candidate
       }
     }
     TLorentzVector pLOC[2];
@@ -131,48 +137,85 @@ void MELAEvent::addTopCandidate(MELATopCandidate_t*& myParticle){
   else if (!isSame){ delete myParticle; myParticle=nullptr; }
 }
 
-void MELAEvent::constructVVCandidates(int isZZ, int fstype){
+MELAEvent::CandidateVVMode MELAEvent::getCandidateVVModeFromString(std::string const& s){
+  std::string str = s;
+  std::transform(str.begin(), str.end(), str.begin(), ::tolower);
+  if (str == "undecayed") return MELAEvent::UndecayedMode;
+  else if (str == "ww") return MELAEvent::WWMode;
+  else if (str == "zz") return MELAEvent::ZZMode;
+  else if (str == "hff" || str == "hffb" || str == "ff" || str == "ffb" || str == "yukawa") return MELAEvent::YukawaMode;
+  else if (str == "zgam" || str == "zgamma") return MELAEvent::ZGammaMode;
+  else if (str == "gamgam" || str == "gammagamma") return MELAEvent::GammaGammaMode;
+  else if (str == "zjets" || str == "zjet" || str == "z" || str == "zff" || str == "zffb") return MELAEvent::ZJetsMode;
+  else{
+    MELAerr << "MELAEvent::getCandidateVVModeFromString: Cannot convert string " << s << " to a MELAEvent::CandidateVVMode enumerator." << std::endl;
+    assert(0);
+    return MELAEvent::nCandidateVVModes;
+  }
+}
+void MELAEvent::printCandidateDecayModeDescriptions(){
+  MELAout << "MELAEvent supports the following decay mode / final state type combinations:\n"
+    << "fstype    / Undecayed / ZZ    / WW     / Yukawa    / Zgam   / gamgam   / ZJets \n"
+    << "fstype=0:   -         / 4l    / lnulnu / 2l        / 2l     / gam      / 2l    \n"
+    << "fstype=1:   -         / 4q    / qq'QQ' / 2q        / 2q     / -        / 2q    \n"
+    << "fstype=2:   -         / 2l2q  / lnuqq' / -         / -      / -        / -     \n"
+    << "fstype=3:   -         / 2l2nu / -      / -         / -      / -        / -     \n"
+    << "fstype=4:   -         / 2q2nu / -      / -         / -      / -        / -     \n"
+    << "fstype=5:   -         / 4nu   / -      / -         / 2nu    / -        / 2nu   \n"
+    << "fstype=-1:            / Any                                                    \n"
+    << "fstype=-2:  -         / 2l2X  / lnuXX'                                         \n"
+    << "fstype=-3:  -         / 2nu2X / -                                              \n"
+    << "fstype=-4:  -         / 2q2X  / qq'XX'                                         "
+    << std::endl;
+}
+
+void MELAEvent::constructVVCandidates(CandidateVVMode VVMode, int fstype){
   /*
-  fstype  / ZZ==1 / WW==0  / Yukawa==2 / Zgam=3 / gamgam=4 / Z+nj=5
-  fstype=0: 4l    / lnulnu / 2l        / 2l     / gam      / 2l
-  fstype=1: 4q    / 4q     / 2q        / 2q     / -        / 2q
-  fstype=2: 2l2q  / lnu2q  / -         / -      / -        / -
-  fstype=3: 2l2nu / -      / -         / -      / -        / -
-  fstype=4: 2q2nu / -      / -         / -      / -        / -
-  fstype=5: 4nu   / -      / -         / 2nu    / -        / 2nu
-  fstype=-1: Any
-  fstype=-2: 2l2X
-  fstype=-3: 2nu2X
-  fstype=-4: 2q2X
+  fstype    / Undecayed / ZZ    / WW     / Yukawa    / Zgam   / gamgam   / ZJets
+  fstype=0:   -         / 4l    / lnulnu / 2l        / 2l     / gam      / 2l
+  fstype=1:   -         / 4q    / qq'QQ' / 2q        / 2q     / -        / 2q
+  fstype=2:   -         / 2l2q  / lnuqq' / -         / -      / -        / -
+  fstype=3:   -         / 2l2nu / -      / -         / -      / -        / -
+  fstype=4:   -         / 2q2nu / -      / -         / -      / -        / -
+  fstype=5:   -         / 4nu   / -      / -         / 2nu    / -        / 2nu
+  fstype=-1:            / Any
+  fstype=-2:  -         / 2l2X  / lnuXX'
+  fstype=-3:  -         / 2nu2X / -
+  fstype=-4:  -         / 2q2X  / qq'XX'
   */
 
   if (
-    (isZZ<=0 && fstype>2)
+    (VVMode==UndecayedMode && fstype!=-1)
     ||
-    (isZZ==1 && fstype>5)
+    (VVMode==WWMode && fstype>2)
     ||
-    (isZZ==2 && fstype>1)
+    (VVMode==ZZMode && fstype>5)
     ||
-    (isZZ==3 && (fstype>1 && fstype!=5))
+    (VVMode==YukawaMode && fstype>1)
     ||
-    (isZZ==4 && fstype>0)
+    (VVMode==ZGammaMode && (fstype>1 && fstype!=5))
     ||
-    (isZZ==5 && (fstype>1 && fstype!=5))
+    (VVMode==GammaGammaMode && fstype>0)
     ||
-    isZZ>5
+    (VVMode==ZJetsMode && (fstype>1 && fstype!=5))
     ||
-    (fstype<-1 && isZZ>1)
+    VVMode==nCandidateVVModes
+    ||
+    (fstype<-1 && !(VVMode==WWMode || VVMode==ZZMode))
+    ||
+    (fstype==-3 && VVMode==WWMode)
     ||
     fstype<-4
     ){
-    if (isZZ<0) std::cerr << "No " << "undecayed" << " candidate with final state " << fstype << " is possible!" << std::endl;
-    else if (isZZ==0) std::cerr << "No " << "WW" << " candidate with final state " << fstype << " is possible!" << std::endl;
-    else if (isZZ==1) std::cerr << "No " << "ZZ" << " candidate with final state " << fstype << " is possible!" << std::endl;
-    else if (isZZ==2) std::cerr << "No " << "f-fbar" << " candidate with final state " << fstype << " is possible!" << std::endl;
-    else if (isZZ==3) std::cerr << "No " << "Zgamma" << " candidate with final state " << fstype << " is possible!" << std::endl;
-    else if (isZZ==4) std::cerr << "No " << "gammagamma" << " candidate with final state " << fstype << " is possible!" << std::endl;
-    else if (isZZ==5) std::cerr << "No " << "Z+(n)jets" << " candidate with final state " << fstype << " is possible!" << std::endl;
-    else std::cerr << "Unknown candidate decay mode " << isZZ << " and final state " << fstype << "!" << std::endl;
+    if (VVMode==WWMode) std::cerr << "No " << "WW" << " candidate with final state " << fstype << " is possible!" << std::endl;
+    else if (VVMode==ZZMode) std::cerr << "No " << "ZZ" << " candidate with final state " << fstype << " is possible!" << std::endl;
+    else if (VVMode==YukawaMode) std::cerr << "No " << "f-fbar" << " candidate with final state " << fstype << " is possible!" << std::endl;
+    else if (VVMode==ZGammaMode) std::cerr << "No " << "Zgamma" << " candidate with final state " << fstype << " is possible!" << std::endl;
+    else if (VVMode==GammaGammaMode) std::cerr << "No " << "gammagamma" << " candidate with final state " << fstype << " is possible!" << std::endl;
+    else if (VVMode==ZJetsMode) std::cerr << "No " << "Z+(n)jets" << " candidate with final state " << fstype << " is possible!" << std::endl;
+    else if (VVMode==UndecayedMode) std::cerr << "No " << "undecayed" << " candidate with final state " << fstype << " is possible!" << std::endl;
+    else std::cerr << "Unknown candidate decay mode " << VVMode << " and final state " << fstype << "!" << std::endl;
+    MELAEvent::printCandidateDecayModeDescriptions();
     return;
   }
 
@@ -217,9 +260,9 @@ void MELAEvent::constructVVCandidates(int isZZ, int fstype){
 
   std::vector<MELAParticle*> tmpVhandle;
 
-  if (isZZ==1 || isZZ==3){ // ZZ
+  if (VVMode==ZZMode || VVMode==ZGammaMode){ // ZZ or Zgam
 
-    if (fstype<0 || (isZZ==1 && (fstype==0 || fstype==2 || fstype==3)) || (isZZ==3 && fstype==0)){ // Z->2l
+    if (fstype<0 || (VVMode==ZZMode && (fstype==0 || fstype==2 || fstype==3)) || (VVMode==ZGammaMode && fstype==0)){ // Z->2l
       for (int c=0; c<3; c++){
         for (MELAParticle* F1:lepMinusPlus[c][0]){
           for (MELAParticle* F2:lepMinusPlus[c][1]){
@@ -233,7 +276,7 @@ void MELAEvent::constructVVCandidates(int isZZ, int fstype){
         }
       }
     }
-    if (fstype<0 || (isZZ==1 && (fstype==3 || fstype==4 || fstype==5)) || (isZZ==3 && fstype==5)){ // Z->2nu
+    if (fstype<0 || (VVMode==ZZMode && (fstype==3 || fstype==4 || fstype==5)) || (VVMode==ZGammaMode && fstype==5)){ // Z->2nu
       for (int c=0; c<3; c++){
         for (MELAParticle* F1:lepNuNubar[c][0]){
           for (MELAParticle* F2:lepNuNubar[c][1]){
@@ -247,7 +290,7 @@ void MELAEvent::constructVVCandidates(int isZZ, int fstype){
         }
       }
     }
-    if (fstype<0 || (isZZ==1 && (fstype==1 || fstype==2 || fstype==4)) || (isZZ==3 && fstype==1)){ // Z->2q
+    if (fstype<0 || (VVMode==ZZMode && (fstype==1 || fstype==2 || fstype==4)) || (VVMode==ZGammaMode && fstype==1)){ // Z->2q
       for (int c=1; c<7; c++){
         for (MELAParticle* F1:quarkAntiquark[c][0]){
           for (MELAParticle* F2:quarkAntiquark[c][1]){
@@ -263,7 +306,7 @@ void MELAEvent::constructVVCandidates(int isZZ, int fstype){
     }
 
   }
-  else if(isZZ==0){ // WW
+  else if (VVMode==WWMode){ // WW
 
     if (fstype<0 || fstype==0 || fstype==2){ // W->lnu
       for (int c=0; c<3; c++){
@@ -302,7 +345,7 @@ void MELAEvent::constructVVCandidates(int isZZ, int fstype){
       }
     }
   }
-  else if (isZZ==2){ // H->f fbar
+  else if (VVMode==YukawaMode){ // H->f fbar
 
     if (fstype<0 || fstype==0){ // H->2l
       for (int c=0; c<3; c++){
@@ -344,7 +387,7 @@ void MELAEvent::constructVVCandidates(int isZZ, int fstype){
     }
 
   }
-  else if (isZZ==5){ // Z->f fbar
+  else if (VVMode==ZJetsMode){ // Z->f fbar
 
     if (fstype<0 || fstype==0){ // Z->2l
       for (int c=0; c<3; c++){
@@ -405,7 +448,7 @@ void MELAEvent::constructVVCandidates(int isZZ, int fstype){
     }
 
   }
-  else{ // Undecayed
+  else if (VVMode==UndecayedMode){ // Undecayed
     for (std::vector<MELAParticle*>::iterator it = intermediates.begin(); it!=intermediates.end(); it++){ // Add directly
       if (isAHiggs((*it)->id)){
         MELACandidate* cand = new MELACandidate(25, (*it)->p4, true);
@@ -421,7 +464,7 @@ void MELAEvent::constructVVCandidates(int isZZ, int fstype){
 
   if (debugVars::debugFlag) std::cout << "Number of V/ZZ before sorting photons: " << tmpVhandle.size() << " " << getNCandidates() << std::endl;
 
-  if (isZZ==3 || isZZ==4){
+  if (VVMode==ZGammaMode || VVMode==GammaGammaMode){
     for (MELAParticle* part:photons){ // Copy the photons
       MELAParticle* V = new MELAParticle(part->id, part->p4);
       V->addDaughter(part); // Photon is its own daughter!
@@ -432,13 +475,13 @@ void MELAEvent::constructVVCandidates(int isZZ, int fstype){
   if (debugVars::debugFlag) std::cout << "Number of V/ZZ after sorting photons: " << tmpVhandle.size() << " " << getNCandidates() << std::endl;
 
   if (
-    ((fstype<0 || fstype==1 || fstype==2 || fstype==4) && (isZZ==0 || isZZ==1)) // W/Z->2j reco.-level
+    ((fstype<0 || fstype==1 || fstype==2 || fstype==4) && (VVMode==WWMode || VVMode==ZZMode)) // W/Z->2j reco.-level
     ||
-    ((fstype<0 || fstype==1) && isZZ==2) // H->2j reco.-level
+    ((fstype<0 || fstype==1) && VVMode==YukawaMode) // H->2j reco.-level
     ||
-    ((fstype<0 || fstype==1) && isZZ==3) // H->Zgam with Z->2j
+    ((fstype<0 || fstype==1) && VVMode==ZGammaMode) // H->Zgam with Z->2j
     ||
-    ((fstype<0 || fstype==1) && isZZ==5) // Z+2jets with Z->2j
+    ((fstype<0 || fstype==1) && VVMode==ZJetsMode) // Z+2jets with Z->2j
     ){
     for (std::vector<MELAParticle*>::iterator it1 = quarkAntiquark[0][0].begin(); it1!=quarkAntiquark[0][0].end(); it1++){
       MELAParticle* F1 = *it1;
@@ -450,28 +493,17 @@ void MELAEvent::constructVVCandidates(int isZZ, int fstype){
 
         if (MELAParticle::checkDeepDaughtership(F1, F2)) continue;
 
-        if (isZZ==0 || isZZ==1 || isZZ==3){
+        if (VVMode==WWMode || VVMode==ZZMode || VVMode==ZGammaMode){
           TLorentzVector pV = F1->p4 + F2->p4;
           MELAParticle* V = new MELAParticle(0, pV);
           V->addDaughter(F1);
           V->addDaughter(F2);
           tmpVhandle.push_back(V);
         }
-        else if (isZZ==2){
+        else if (VVMode==YukawaMode || VVMode==ZJetsMode){
           TLorentzVector pCand = F1->p4 + F2->p4;
-          MELACandidate* cand = new MELACandidate(25, pCand, true);
-          cand->addDaughter(F1);
-          cand->addDaughter(F2);
-
-          TVar::CandidateDecayMode defaultHDecayMode = HDecayMode;
-          setCandidateDecayMode(TVar::CandidateDecay_ff);
-          cand->sortDaughters();
-          setCandidateDecayMode(defaultHDecayMode);
-          addCandidate(cand);
-        }
-        else if (isZZ==5){
-          TLorentzVector pCand = F1->p4 + F2->p4;
-          MELACandidate* cand = new MELACandidate(23, pCand, true);
+          int candId = (VVMode==ZJetsMode ? 23 : 25);
+          MELACandidate* cand = new MELACandidate(candId, pCand, true);
           cand->addDaughter(F1);
           cand->addDaughter(F2);
 
@@ -506,56 +538,56 @@ void MELAEvent::constructVVCandidates(int isZZ, int fstype){
       std::cout << "21: " << Vj1->id << '\t' << Vj1->x() << '\t' << Vj1->y() << '\t' << Vj1->z() << '\t' << Vj1->t() << '\t' << std::endl;
       std::cout << "22: " << Vj2->id << '\t' << Vj2->x() << '\t' << Vj2->y() << '\t' << Vj2->z() << '\t' << Vj2->t() << '\t' << std::endl;
       */
-      if (Vi1==Vj1 || (Vi2==Vj2 && Vi2 != 0)) continue;
+      if (Vi1==Vj1 || (Vi2 && Vi2==Vj2)) continue;
       bool createCandidate=true;
-      if (isZZ<=1 && fstype<-1){
+      if ((VVMode==WWMode || VVMode==ZZMode) && fstype<-1){
         unsigned int partcounter=0;
         if (fstype==-2){ // Count leptons
-          if (Vi1!=0 && PDGHelpers::isALepton(Vi1->id)) partcounter++;
-          if (Vi2!=0 && PDGHelpers::isALepton(Vi2->id)) partcounter++;
-          if (Vj1!=0 && PDGHelpers::isALepton(Vj1->id)) partcounter++;
-          if (Vj2!=0 && PDGHelpers::isALepton(Vj2->id)) partcounter++;
+          if (Vi1 && PDGHelpers::isALepton(Vi1->id)) partcounter++;
+          if (Vi2 && PDGHelpers::isALepton(Vi2->id)) partcounter++;
+          if (Vj1 && PDGHelpers::isALepton(Vj1->id)) partcounter++;
+          if (Vj2 && PDGHelpers::isALepton(Vj2->id)) partcounter++;
         }
-        else if (fstype==-3){ // Count neutrinos
-          if (Vi1!=0 && PDGHelpers::isANeutrino(Vi1->id)) partcounter++;
-          if (Vi2!=0 && PDGHelpers::isANeutrino(Vi2->id)) partcounter++;
-          if (Vj1!=0 && PDGHelpers::isANeutrino(Vj1->id)) partcounter++;
-          if (Vj2!=0 && PDGHelpers::isANeutrino(Vj2->id)) partcounter++;
+        if ((fstype==-3 && VVMode==ZZMode) || (fstype==-2 && VVMode==WWMode)){ // Count neutrinos
+          if (Vi1 && PDGHelpers::isANeutrino(Vi1->id)) partcounter++;
+          if (Vi2 && PDGHelpers::isANeutrino(Vi2->id)) partcounter++;
+          if (Vj1 && PDGHelpers::isANeutrino(Vj1->id)) partcounter++;
+          if (Vj2 && PDGHelpers::isANeutrino(Vj2->id)) partcounter++;
         }
-        else if (fstype==-4){ // Count jets
-          if (Vi1!=0 && PDGHelpers::isAJet(Vi1->id)) partcounter++;
-          if (Vi2!=0 && PDGHelpers::isAJet(Vi2->id)) partcounter++;
-          if (Vj1!=0 && PDGHelpers::isAJet(Vj1->id)) partcounter++;
-          if (Vj2!=0 && PDGHelpers::isAJet(Vj2->id)) partcounter++;
+        if (fstype==-4){ // Count jets
+          if (Vi1 && PDGHelpers::isAJet(Vi1->id)) partcounter++;
+          if (Vi2 && PDGHelpers::isAJet(Vi2->id)) partcounter++;
+          if (Vj1 && PDGHelpers::isAJet(Vj1->id)) partcounter++;
+          if (Vj2 && PDGHelpers::isAJet(Vj2->id)) partcounter++;
         }
         if (partcounter<2) createCandidate=false;
       }
       if (!createCandidate) continue;
 
       if (debugVars::debugFlag){
-        if (Vi1!=0) std::cout << "Vi1 not zero. Id: " << Vi1->id << std::endl;
-        if (Vi2!=0) std::cout << "Vi2 not zero. Id: " << Vi2->id << std::endl;
-        if (Vj1!=0) std::cout << "Vj1 not zero. Id: " << Vj1->id << std::endl;
-        if (Vj2!=0) std::cout << "Vj2 not zero. Id: " << Vj2->id << std::endl;
+        if (Vi1) std::cout << "Vi1 not zero. Id: " << Vi1->id << std::endl;
+        if (Vi2) std::cout << "Vi2 not zero. Id: " << Vi2->id << std::endl;
+        if (Vj1) std::cout << "Vj1 not zero. Id: " << Vj1->id << std::endl;
+        if (Vj2) std::cout << "Vj2 not zero. Id: " << Vj2->id << std::endl;
       }
 
       TLorentzVector pH(0, 0, 0, 0);
-      if (Vi1!=0) pH = pH + Vi1->p4;
-      if (Vi2!=0) pH = pH + Vi2->p4;
-      if (Vj1!=0) pH = pH + Vj1->p4;
-      if (Vj2!=0) pH = pH + Vj2->p4;
+      if (Vi1) pH = pH + Vi1->p4;
+      if (Vi2) pH = pH + Vi2->p4;
+      if (Vj1) pH = pH + Vj1->p4;
+      if (Vj2) pH = pH + Vj2->p4;
       MELACandidate* cand = new MELACandidate(25, pH, true);
 
-      if (Vi1!=0) cand->addDaughter(Vi1);
-      if (Vi2!=0) cand->addDaughter(Vi2);
-      if (Vj1!=0) cand->addDaughter(Vj1);
-      if (Vj2!=0) cand->addDaughter(Vj2);
+      if (Vi1) cand->addDaughter(Vi1);
+      if (Vi2) cand->addDaughter(Vi2);
+      if (Vj1) cand->addDaughter(Vj1);
+      if (Vj2) cand->addDaughter(Vj2);
 
       TVar::CandidateDecayMode defaultHDecayMode = HDecayMode;
-      if (isZZ==0) setCandidateDecayMode(TVar::CandidateDecay_WW);
-      else if (isZZ==1) setCandidateDecayMode(TVar::CandidateDecay_ZZ);
-      else if (isZZ==3) setCandidateDecayMode(TVar::CandidateDecay_ZG);
-      else if (isZZ==4) setCandidateDecayMode(TVar::CandidateDecay_GG);
+      if (VVMode==WWMode) setCandidateDecayMode(TVar::CandidateDecay_WW);
+      else if (VVMode==ZZMode) setCandidateDecayMode(TVar::CandidateDecay_ZZ);
+      else if (VVMode==ZGammaMode) setCandidateDecayMode(TVar::CandidateDecay_ZG);
+      else if (VVMode==GammaGammaMode) setCandidateDecayMode(TVar::CandidateDecay_GG);
       else setCandidateDecayMode(TVar::CandidateDecay_ff);
       if (debugVars::debugFlag) std::cout << "Sorting daughters..." << std::endl;
       cand->sortDaughters();
