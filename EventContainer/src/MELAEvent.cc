@@ -22,12 +22,12 @@ void MELAEvent::applyLeptonSelection(){
   for (std::vector<MELAParticle*>::iterator it = leptons.begin(); it!=leptons.end(); it++){
     // Trigger and acceptance
     bool passAcceptance = true;
-    if (std::abs((*it)->id)==11 && ((*it)->pt()<=electronPtCut || std::abs((*it)->eta())>=electronEtaCut)) passAcceptance = false;
-    else if (std::abs((*it)->id)==13 && ((*it)->pt()<=muonPtCut || std::abs((*it)->eta())>=muonEtaCut)) passAcceptance = false;
-    else if (std::abs((*it)->id)==15) passAcceptance = false;
+    if (std::abs((*it)->id)==11 && ((*it)->pt()<=electronPtCut || std::abs((*it)->eta())>=electronEtaCut)){ passAcceptance = false; continue; }
+    else if (std::abs((*it)->id)==13 && ((*it)->pt()<=muonPtCut || std::abs((*it)->eta())>=muonEtaCut)){ passAcceptance = false; continue; }
+    else if (std::abs((*it)->id)==15){ passAcceptance = false; continue; }
     for (std::vector<MELAParticle*>::iterator it2 = leptons.begin(); it2<leptons.end(); it2++){
       if ((*it2)==(*it)) continue; // Every particle is their own ghost.
-      else if ((*it)->deltaR((*it2)->p4)<=ghostDeltaRCut) passAcceptance = false; // Ghost removal
+      else if ((*it)->deltaR((*it2)->p4)<=ghostDeltaRCut){ passAcceptance = false; break; } // Ghost removal
     }
     (*it)->setSelected(passAcceptance);
   }
@@ -41,10 +41,10 @@ void MELAEvent::applyPhotonSelection(){
 void MELAEvent::applyJetSelection(){
   for (std::vector<MELAParticle*>::iterator it = jets.begin(); it!=jets.end(); it++){
     bool passAcceptance = true;
-    if ((*it)->pt()<=jetPtCut || std::abs((*it)->eta())>=jetEtaCut) passAcceptance = false; // ZZ4l selection and acceptance
+    if ((*it)->pt()<=jetPtCut || std::abs((*it)->eta())>=jetEtaCut){ passAcceptance = false; continue; }
     for (std::vector<MELAParticle*>::iterator it2 = leptons.begin(); it2<leptons.end(); it2++){ // Clean from selected leptons
       if ((*it2)->passSelection){ // If it is not selected at all, why would I care?
-        if ((*it)->deltaR((*it2)->p4)<=jetDeltaR) passAcceptance = false;
+        if ((*it)->deltaR((*it2)->p4)<=jetDeltaR){ passAcceptance = false; break; }
       }
     }
     (*it)->setSelected(passAcceptance);
@@ -68,14 +68,16 @@ void MELAEvent::applyCandidateSelection(){
     if ((*it)->getSortedV(1) && ((*it)->getSortedV(1)->m()<=mV2LowCut || (*it)->getSortedV(1)->m()>=mV2HighCut)){
       passAcceptance = false; (*it)->getSortedV(1)->setSelected(passAcceptance);
     } // Z2 selection
-    for (MELAParticle* extraV:(*it)->getSortedVs()){
-      if (!isAZBoson(extraV->id)) continue;
-      else if (extraV->getDaughter(0)){
+
+    // Extra V selection, no effect on the main candidate
+    for (MELAParticle* extraV:(*it)->getAssociatedSortedVs()){
+      for (MELAParticle* dauV:extraV->getDaughters()){ if (!dauV->passSelection) extraV->setSelected(false); break; }
+      if (!extraV->passSelection) continue;
+
+      if (isAZBoson(extraV->id) && extraV->getDaughter(0)){
         if (
           (isALepton(extraV->getDaughter(0)->id) && (extraV->m()<=mllLowCut || extraV->m()>=mllHighCut))
-          ||
-          (isANeutrino(extraV->getDaughter(0)->id))
-          ) extraV->setSelected(false); // Extra Z selection, no effect on ZZ candidate
+          ) extraV->setSelected(false);
       }
     }
     TLorentzVector pLOC[2];
