@@ -22,10 +22,10 @@ void MELAEvent::applyLeptonSelection(){
   for (std::vector<MELAParticle*>::iterator it = leptons.begin(); it!=leptons.end(); it++){
     // Trigger and acceptance
     bool passAcceptance = true;
-    if (std::abs((*it)->id)==11 && ((*it)->pt()<=electronPtCut || std::abs((*it)->eta())>=electronEtaCut)){ passAcceptance = false; continue; }
-    else if (std::abs((*it)->id)==13 && ((*it)->pt()<=muonPtCut || std::abs((*it)->eta())>=muonEtaCut)){ passAcceptance = false; continue; }
-    else if (std::abs((*it)->id)==15){ passAcceptance = false; continue; }
-    for (std::vector<MELAParticle*>::iterator it2 = leptons.begin(); it2<leptons.end(); it2++){
+    if (std::abs((*it)->id)==11 && ((*it)->pt()<=electronPtCut || std::abs((*it)->eta())>=electronEtaCut)) passAcceptance = false;
+    else if (std::abs((*it)->id)==13 && ((*it)->pt()<=muonPtCut || std::abs((*it)->eta())>=muonEtaCut)) passAcceptance = false;
+    else if (std::abs((*it)->id)==15) passAcceptance = false;
+    for (std::vector<MELAParticle*>::iterator it2 = leptons.begin(); it2!=leptons.end(); it2++){
       if ((*it2)==(*it)) continue; // Every particle is their own ghost.
       else if ((*it)->deltaR((*it2)->p4)<=ghostDeltaRCut){ passAcceptance = false; break; } // Ghost removal
     }
@@ -41,8 +41,8 @@ void MELAEvent::applyPhotonSelection(){
 void MELAEvent::applyJetSelection(){
   for (std::vector<MELAParticle*>::iterator it = jets.begin(); it!=jets.end(); it++){
     bool passAcceptance = true;
-    if ((*it)->pt()<=jetPtCut || std::abs((*it)->eta())>=jetEtaCut){ passAcceptance = false; continue; }
-    for (std::vector<MELAParticle*>::iterator it2 = leptons.begin(); it2<leptons.end(); it2++){ // Clean from selected leptons
+    if ((*it)->pt()<=jetPtCut || std::abs((*it)->eta())>=jetEtaCut) passAcceptance = false;
+    for (std::vector<MELAParticle*>::iterator it2 = leptons.begin(); it2!=leptons.end(); it2++){ // Clean from selected leptons
       if ((*it2)->passSelection){ // If it is not selected at all, why would I care?
         if ((*it)->deltaR((*it2)->p4)<=jetDeltaR){ passAcceptance = false; break; }
       }
