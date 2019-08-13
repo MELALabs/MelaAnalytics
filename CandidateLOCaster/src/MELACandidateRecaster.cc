@@ -809,12 +809,13 @@ double MELACandidateRecaster::getMergeOrder_GluonsIntoQuarks(
   int chosenPerm=-1;
   for (unsigned int iperm=0; iperm<permutator.size(); iperm++){
     vector<int>& perm = permutator.at(iperm);
+    //MELAout << "Checking perm " << perm << endl;
     double theKDP=1;
     bool skipPermutation=false;
     for (unsigned int ig=0; ig<perm.size(); ig++) theKDP *= quantifiers.at(ig).at(perm.at(ig));
     if (candScheme==TVar::JJVBF){
       double VBFL= getVBFLikelihood(gluons, quarks, perm);
-      if (VBFL==0.) VBFL=1e40; // Put something huge
+      if (VBFL<=0.) VBFL=1e40; // Put something huge
       theKDP *= VBFL;
     }
     if (VmassMonitor!=nullptr && !VmassMonitor->empty()){
@@ -984,9 +985,17 @@ void MELACandidateRecaster::reduceJJtoQuarks(MELACandidate*& cand){
   vector<MELAParticle*> dummyVectorPart;
   vector<int> dummyVectorInt;
   vector<pair<MELAParticle*, vector<MELAParticle*>>> quark_gluon_collection = mapGluonsToQuarks(dummyVectorPart, quarks, dummyVectorInt);
+  /*
+  for (auto const& qgpair:quark_gluon_collection){
+    MELAout << *(qgpair.first) << " : ";
+    for (MELAParticle* p:qgpair.second) MELAout << *p << " | ";
+    MELAout << endl;
+  }
+  */
   /*double cfglikelihood=-1;*/
   if (candScheme==TVar::JJVBF) /*cfglikelihood=*/getBestVBFConfig(quark_gluon_collection, &qordered, &swapconfig);
   else if (hasProtectedV) /*cfglikelihood=*/getBestVHConfig(protectV, quark_gluon_collection, &qordered, &swapconfig);
+  //MELAout << "qordered: " << qordered << endl;
   if (!(qordered.empty() || qordered.size()==quarks.size())){
     MELAerr << "qordered.empty() ? " << qordered.empty() << endl;
     MELAerr << "qordered.size()=?quarks.size() " << qordered.size() << " ?= " << quarks.size() << endl;
@@ -1003,7 +1012,7 @@ void MELACandidateRecaster::reduceJJtoQuarks(MELACandidate*& cand){
   for (unsigned int qord=0; qord<qordered.size(); qord++){
     const int& qindex = qordered.at(qord);
     MELAParticle*& theQuark = quarks.at(qindex);
-    //MELAout << "Starting quark id = " << theQuark->id << endl;
+    //MELAout << "Starting quark = " << *theQuark << endl;
     //MELAout << "Starting quark status = " << theQuark->genStatus << endl;
     //MELAout << "Swap ? " << (swapconfig%2==1) << endl;
     if (swapconfig%2==1){
