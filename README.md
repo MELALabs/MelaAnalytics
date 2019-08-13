@@ -20,5 +20,5 @@ git clone https://github.com/cms-analysis/HiggsAnalysis-ZZMatrixElement.git ZZMa
 
 ```
 git clone https://github.com/usarica/MelaAnalytics.git
-(cd MelaAnalytics; git checkout -b from-v15 v1.5)
+(cd MelaAnalytics; git checkout -b from-v18 v1.8)
 ```
