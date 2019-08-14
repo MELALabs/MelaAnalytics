@@ -171,7 +171,7 @@ void MELAEvent::printCandidateDecayModeDescriptions(){
     << std::endl;
 }
 
-void MELAEvent::constructVVCandidates(CandidateVVMode VVMode, int fstype){
+void MELAEvent::constructVVCandidates(CandidateVVMode const& VVMode, int const& fstype){
   /*
   fstype    / Undecayed / ZZ    / WW     / Yukawa    / Zgam   / gamgam   / ZJets
   fstype=0:   -         / 4l    / lnulnu / 2l        / 2l     / gam      / 2l
@@ -760,41 +760,41 @@ void MELAEvent::constructTopCandidates(){
   }
 }
 
-MELACandidate* MELAEvent::getCandidate(int index)const{
-  if ((int)candidates.size()>index) return candidates.at(index);
-  else return 0;
+MELACandidate* MELAEvent::getCandidate(size_t const& index)const{
+  if (candidates.size()>index) return candidates.at(index);
+  else return nullptr;
 }
-MELATopCandidate_t* MELAEvent::getTopCandidate(int index)const{
-  if ((int) topcandidates.size()>index) return topcandidates.at(index);
-  else return 0;
+MELATopCandidate_t* MELAEvent::getTopCandidate(size_t const& index)const{
+  if ( topcandidates.size()>index) return topcandidates.at(index);
+  else return nullptr;
 }
-MELAParticle* MELAEvent::getLepton(int index)const{
-  if ((int)leptons.size()>index) return leptons.at(index);
-  else return 0;
+MELAParticle* MELAEvent::getLepton(size_t const& index)const{
+  if (leptons.size()>index) return leptons.at(index);
+  else return nullptr;
 }
-MELAParticle* MELAEvent::getNeutrino(int index)const{
-  if ((int)neutrinos.size()>index) return neutrinos.at(index);
-  else return 0;
+MELAParticle* MELAEvent::getNeutrino(size_t const& index)const{
+  if (neutrinos.size()>index) return neutrinos.at(index);
+  else return nullptr;
 }
-MELAParticle* MELAEvent::getPhoton(int index)const{
-  if ((int)photons.size()>index) return photons.at(index);
-  else return 0;
+MELAParticle* MELAEvent::getPhoton(size_t const& index)const{
+  if (photons.size()>index) return photons.at(index);
+  else return nullptr;
 }
-MELAParticle* MELAEvent::getJet(int index)const{
-  if ((int)jets.size()>index) return jets.at(index);
-  else return 0;
+MELAParticle* MELAEvent::getJet(size_t const& index)const{
+  if (jets.size()>index) return jets.at(index);
+  else return nullptr;
 }
-MELAParticle* MELAEvent::getMother(int index)const{
-  if ((int) mothers.size()>index) return mothers.at(index);
-  else return 0;
+MELAParticle* MELAEvent::getMother(size_t const& index)const{
+  if ( mothers.size()>index) return mothers.at(index);
+  else return nullptr;
 }
-MELAParticle* MELAEvent::getIntermediate(int index)const{
-  if ((int)intermediates.size()>index) return intermediates.at(index);
-  else return 0;
+MELAParticle* MELAEvent::getIntermediate(size_t const& index)const{
+  if (intermediates.size()>index) return intermediates.at(index);
+  else return nullptr;
 }
-MELAParticle* MELAEvent::getParticle(int index)const{
-  if ((int)particles.size()>index) return particles.at(index);
-  else return 0;
+MELAParticle* MELAEvent::getParticle(size_t const& index)const{
+  if (particles.size()>index) return particles.at(index);
+  else return nullptr;
 }
 
 TLorentzVector MELAEvent::missingP() const{
@@ -810,12 +810,12 @@ TLorentzVector MELAEvent::missingP() const{
 
 void MELAEvent::addVVCandidateAppendages(){
   for (std::vector<MELACandidate*>::iterator it = candidates.begin(); it!=candidates.end(); it++){
-    for (std::vector<MELAParticle*>::iterator iL = leptons.begin(); iL!=leptons.end(); iL++){ if ((*iL)->passSelection) (*it)->addAssociatedLeptons(*iL); }
-    for (std::vector<MELAParticle*>::iterator iL = neutrinos.begin(); iL!=neutrinos.end(); iL++){ if ((*iL)->passSelection) (*it)->addAssociatedNeutrinos(*iL); }
-    for (std::vector<MELAParticle*>::iterator iP = photons.begin(); iP!=photons.end(); iP++){ if ((*iP)->passSelection) (*it)->addAssociatedPhotons(*iP); }
-    for (std::vector<MELAParticle*>::iterator iJ = jets.begin(); iJ!=jets.end(); iJ++){ if ((*iJ)->passSelection) (*it)->addAssociatedJets(*iJ); }
+    for (std::vector<MELAParticle*>::iterator iL = leptons.begin(); iL!=leptons.end(); iL++){ if ((*iL)->passSelection) (*it)->addAssociatedLepton(*iL); }
+    for (std::vector<MELAParticle*>::iterator iN = neutrinos.begin(); iN!=neutrinos.end(); iN++){ if ((*iN)->passSelection) (*it)->addAssociatedNeutrino(*iN); }
+    for (std::vector<MELAParticle*>::iterator iP = photons.begin(); iP!=photons.end(); iP++){ if ((*iP)->passSelection) (*it)->addAssociatedPhoton(*iP); }
+    for (std::vector<MELAParticle*>::iterator iJ = jets.begin(); iJ!=jets.end(); iJ++){ if ((*iJ)->passSelection) (*it)->addAssociatedJet(*iJ); }
     (*it)->addAssociatedVs();
-    for (std::vector<MELATopCandidate_t*>::iterator iT = topcandidates.begin(); iT!=topcandidates.end(); iT++){ if ((*iT)->passSelection) (*it)->addAssociatedTops(*iT); }
+    for (std::vector<MELATopCandidate_t*>::iterator iT = topcandidates.begin(); iT!=topcandidates.end(); iT++){ if ((*iT)->passSelection) (*it)->addAssociatedTop(*iT); }
     for (std::vector<MELAParticle*>::iterator iM = mothers.begin(); iM!=mothers.end(); iM++) (*it)->addMother(*iM);
   }
 }

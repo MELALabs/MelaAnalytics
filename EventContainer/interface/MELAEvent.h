@@ -50,14 +50,15 @@ public:
   // Member functions
   void setWeight(double weight_){ weight=weight_; }
   void addExtraWeight(double weight_){ extraWeight.push_back(weight_); }
-  int getNExtraWeights() const{ return extraWeight.size(); }
-  double getWeight(int index=-1) const{ if (index==-1) return weight; else if (index<getNExtraWeights()) return extraWeight.at(index); else return 0; }
+  size_t getNExtraWeights() const{ return extraWeight.size(); }
+  double getWeight(int index=-1) const{ if (index==-1) return weight; else if (index<(int) getNExtraWeights()) return extraWeight.at(index); else return 0; }
   std::vector<double>& getExtraWeights(){ return extraWeight; }
-  void setXSec(double xsec_){ xsec=xsec_; }
+  std::vector<double> const& getExtraWeights() const{ return extraWeight; }
+  void setXSec(double const& xsec_){ xsec=xsec_; }
   double getXSec() const{ return xsec; }
 
 
-  void constructVVCandidates(CandidateVVMode VVmode, int fstype);
+  void constructVVCandidates(CandidateVVMode const& VVmode, int const& fstype);
   void constructTopCandidates();
   void applyParticleSelection();
   void addVVCandidateAppendages();
@@ -73,15 +74,15 @@ public:
   int getNIntermediates() const{ return intermediates.size(); }
   int getNParticles() const{ return particles.size(); }
 
-  MELACandidate* getCandidate(int index) const;
-  MELATopCandidate_t* getTopCandidate(int index) const;
-  MELAParticle* getLepton(int index) const;
-  MELAParticle* getNeutrino(int index) const;
-  MELAParticle* getPhoton(int index) const;
-  MELAParticle* getJet(int index) const;
-  MELAParticle* getMother(int index) const;
-  MELAParticle* getIntermediate(int index) const;
-  MELAParticle* getParticle(int index) const;
+  MELACandidate* getCandidate(size_t const& index) const;
+  MELATopCandidate_t* getTopCandidate(size_t const& index) const;
+  MELAParticle* getLepton(size_t const& index) const;
+  MELAParticle* getNeutrino(size_t const& index) const;
+  MELAParticle* getPhoton(size_t const& index) const;
+  MELAParticle* getJet(size_t const& index) const;
+  MELAParticle* getMother(size_t const& index) const;
+  MELAParticle* getIntermediate(size_t const& index) const;
+  MELAParticle* getParticle(size_t const& index) const;
 
   const std::vector<MELACandidate*>& getCandidates() const{ return candidates; }
   const std::vector<MELATopCandidate_t*>& getTopCandidates() const{ return topcandidates; }

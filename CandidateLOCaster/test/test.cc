@@ -47,7 +47,7 @@ void test_VBF_Recast(){
   for (MELAParticle& part:daughters){ part.setGenStatus(1); cand += &part; }
   cand.sortDaughters();
   for (MELAParticle& part:mothers){ part.setGenStatus(-1); cand.addMother(&part); }
-  for (MELAParticle& part:aparticles){ part.setGenStatus(1); cand.addAssociatedJets(&part); }
+  for (MELAParticle& part:aparticles){ part.setGenStatus(1); cand.addAssociatedJet(&part); }
   cand.addAssociatedVs();
 
   MELAout << "Original candidate:" << endl;
