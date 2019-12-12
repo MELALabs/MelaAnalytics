@@ -142,7 +142,8 @@ void MELAEvent::addTopCandidate(MELATopCandidate_t*& myParticle){
 MELAEvent::CandidateVVMode MELAEvent::getCandidateVVModeFromString(std::string const& s){
   std::string str = s;
   std::transform(str.begin(), str.end(), str.begin(), ::tolower);
-  if (str == "undecayed") return MELAEvent::UndecayedMode;
+  if (str == "none") return MELAEvent::nCandidateVVModes;
+  else if (str == "undecayed") return MELAEvent::UndecayedMode;
   else if (str == "ww") return MELAEvent::WWMode;
   else if (str == "zz") return MELAEvent::ZZMode;
   else if (str == "hff" || str == "hffb" || str == "ff" || str == "ffb" || str == "yukawa") return MELAEvent::YukawaMode;
