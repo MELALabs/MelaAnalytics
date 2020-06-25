@@ -20,5 +20,16 @@ git clone https://github.com/MELALabs/MELACore.git ZZMatrixElement
 
 ```
 git clone https://github.com/MELALabs/MelaAnalytics.git
-(cd MelaAnalytics; git checkout -b from-v20 v2.0)
+(cd MelaAnalytics; git checkout -b from-v21 v2.1)
+```
+
+## Compilation
+
+First, please follow the instructions on MELA core package to compile it. Assuming you already did that,
+
+- if you are using CMSSW, regular scram should work.
+- if you are not using CMSSW, each package contains its own makefile. You can simply do
+
+```
+make (-j #cores)
 ```
