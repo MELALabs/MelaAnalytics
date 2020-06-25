@@ -12,13 +12,13 @@
 ### MELA
 
 ```
-git clone https://github.com/cms-analysis/HiggsAnalysis-ZZMatrixElement.git ZZMatrixElement
+git clone https://github.com/MELALabs/MELACore.git ZZMatrixElement
 (cd ZZMatrixElement; git checkout -b from-v222 v2.2.2; source setup.sh -j;)
 ```
 
 ### MELA Analytics
 
 ```
-git clone https://github.com/usarica/MelaAnalytics.git
-(cd MelaAnalytics; git checkout -b from-v19 v1.9)
+git clone https://github.com/MELALabs/MelaAnalytics.git
+(cd MelaAnalytics; git checkout -b from-v20 v2.0)
 ```
