@@ -1,6 +1,6 @@
 COMPILEPATH          = $(PWD)/
 BASEINCLUDE          = $(COMPILEPATH)/../../
-MELADIR              = $(BASEINCLUDE)ZZMatrixElement/MELA
+MELADIR              = $(BASEINCLUDE)JHUGenMELA/MELA
 INCLUDEDIR           = $(COMPILEPATH)interface/
 SRCDIR               = $(COMPILEPATH)src/
 BINDIR               = $(COMPILEPATH)bin/
@@ -22,7 +22,7 @@ NGLIBS         = $(ROOTGLIBS)
 # Hack here, because RooFit is removed from ROOT:
 NGLIBS        += -L $(ROOFITSYS)/lib/ -lMinuit -lRooFitCore -lRooFit #-lboost_regex
 # Libraries for common user packages
-NGLIBS        += -lZZMatrixElementMELA
+NGLIBS        += -lJHUGenMELAMELA
 # Filter out libNew because it leads to floating-point exceptions in versions of ROOT prior to 6.08.02
 # See the thread https://root-forum.cern.ch/t/linking-new-library-leads-to-a-floating-point-exception-at-startup/22404
 GLIBS          = $(filter-out -lNew, $(NGLIBS))

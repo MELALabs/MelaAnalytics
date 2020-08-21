@@ -12,15 +12,16 @@
 ### MELA
 
 ```
-git clone https://github.com/MELALabs/MELACore.git ZZMatrixElement
-(cd ZZMatrixElement; git checkout -b from-v222 v2.2.2; source setup.sh -j;)
+git clone https://github.com/JHUGen/JHUGenMELA.git
+(cd JHUGenMELA; git checkout -b from-v231 v2.3.1; ./setup.sh -j;)
+# Last line could also use './setup.sh -j standalone' in order to force standalone computation.
 ```
 
 ### MELA Analytics
 
 ```
 git clone https://github.com/MELALabs/MelaAnalytics.git
-(cd MelaAnalytics; git checkout -b from-v21 v2.1)
+(cd MelaAnalytics; git checkout -b from-v22 v2.2)
 ```
 
 ## Compilation
