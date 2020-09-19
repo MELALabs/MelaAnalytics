@@ -76,6 +76,31 @@ namespace BranchHelpers{
     BranchHelpers::BranchTypes btype;
     Bool_t isVector;
 
+  protected:
+    void setBranchToTree(){
+      if (theTree && bname!=""){
+        TString leaftypename = "";
+        if (!isVector){
+          if (btype == BranchHelpers::bBool) leaftypename = "O";
+          else if (btype == BranchHelpers::bUChar) leaftypename = "b";
+          else if (btype == BranchHelpers::bChar) leaftypename = "B";
+          else if (btype == BranchHelpers::bUShort) leaftypename = "s";
+          else if (btype == BranchHelpers::bShort) leaftypename = "S";
+          else if (btype == BranchHelpers::bUInt) leaftypename = "i";
+          else if (btype == BranchHelpers::bInt) leaftypename = "I";
+          else if (btype == BranchHelpers::bULongLong) leaftypename = "l";
+          else if (btype == BranchHelpers::bLongLong) leaftypename = "L";
+          else if (btype == BranchHelpers::bFloat) leaftypename = "F";
+          else if (btype == BranchHelpers::bDouble) leaftypename = "D";
+        }
+        if (leaftypename==""){
+          if (isVector) theTree->Branch(bname, &valueArray);
+          else theTree->Branch(bname, &value);
+        }
+        else theTree->Branch(bname, &value, (bname + "/" + leaftypename));
+      }
+    }
+
   public:
 
     void setValue(varType inVal){
@@ -96,8 +121,12 @@ namespace BranchHelpers{
       valueArray.clear();
       value = this->getDefVal();
     }
+    void resetTree(TTree* theTree_){
+      theTree = theTree_;
+      setBranchToTree();
+    }
 
-    TBranch* getBranch(){ return theTree->GetBranch(bname); }
+    TBranch* getBranch(){ return (theTree ? theTree->GetBranch(bname) : nullptr); }
 
     virtual void Print(){
       std::cout << "**********\n";
@@ -153,28 +182,7 @@ namespace BranchHelpers{
         defVal = new varType(*defVal_);
       }
       reset();
-
-      TString leaftypename = "";
-      if (!isVector){
-        if (btype == BranchHelpers::bBool) leaftypename = "O";
-        else if (btype == BranchHelpers::bUChar) leaftypename = "b";
-        else if (btype == BranchHelpers::bChar) leaftypename = "B";
-        else if (btype == BranchHelpers::bUShort) leaftypename = "s";
-        else if (btype == BranchHelpers::bShort) leaftypename = "S";
-        else if (btype == BranchHelpers::bUInt) leaftypename = "i";
-        else if (btype == BranchHelpers::bInt) leaftypename = "I";
-        else if (btype == BranchHelpers::bULongLong) leaftypename = "l";
-        else if (btype == BranchHelpers::bLongLong) leaftypename = "L";
-        else if (btype == BranchHelpers::bFloat) leaftypename = "F";
-        else if (btype == BranchHelpers::bDouble) leaftypename = "D";
-      }
-      if (theTree && bname!=""){
-        if (leaftypename==""){
-          if (isVector) theTree->Branch(bname, &valueArray);
-          else theTree->Branch(bname, &value);
-        }
-        else theTree->Branch(bname, &value, (bname + "/" + leaftypename));
-      }
+      setBranchToTree();
     }
 
   };
