@@ -9,8 +9,8 @@ TESTDIR              = $(COMPILEPATH)test/
 RUNDIR               = $(COMPILEPATH)
 LIB                  = libMelaAnalyticsEventContainer.so
 
-ROOTCFLAGS    = $(shell root-config --cflags) -Lrootlib -lEG
-ROOTGLIBS     = $(shell root-config --glibs) -Lrootlib -lEG
+ROOTCFLAGS    = $(shell root-config --cflags) -Lrootlib
+ROOTLIBS     = $(shell root-config --libs) -Lrootlib
 
 ARCH         := $(shell root-config --arch)
 
@@ -18,14 +18,14 @@ CXX           = g++
 CXXFLAGS      = -fPIC -g -O2 $(ROOTCFLAGS) -I$(ROOFITSYS)/include/ -I$(INCLUDEDIR) -I$(MELADIR)/interface/
 LINKERFLAGS   = -Wl,-rpath=$(LIBDIR),-soname,$(LIB)
 
-NGLIBS         = $(ROOTGLIBS)
+NLIBS         = $(ROOTLIBS)
 # Hack here, because RooFit is removed from ROOT:
-NGLIBS        += -L $(ROOFITSYS)/lib/ -lMinuit -lRooFitCore -lRooFit #-lboost_regex
+NLIBS        += -L $(ROOFITSYS)/lib/ -lMinuit -lRooFitCore -lRooFit #-lboost_regex
 # Libraries for common user packages
-NGLIBS        += -lJHUGenMELAMELA
+NLIBS        += -lJHUGenMELAMELA
 # Filter out libNew because it leads to floating-point exceptions in versions of ROOT prior to 6.08.02
 # See the thread https://root-forum.cern.ch/t/linking-new-library-leads-to-a-floating-point-exception-at-startup/22404
-GLIBS          = $(filter-out -lNew, $(NGLIBS))
+LIBS          = $(filter-out -lNew, $(NLIBS))
 
 
 SOURCES = $(wildcard $(SRCDIR)*.cc)
@@ -44,7 +44,7 @@ all: $(LIB)
 
 %.o: 	$(SRCDIR)%.cc $(SRCDIR)%.cxx $(BINDIR)%.cc $(BINDIR)%.cxx
 	$(QUIET) echo "Compiling $<"; \
-	$(CXX) $(CXXFLAGS) $< -c -o $@ $(GLIBS)
+	$(CXX) $(CXXFLAGS) $< -c -o $@ $(LIBS)
 
 
 $(LIB):	$(OBJECTS)
