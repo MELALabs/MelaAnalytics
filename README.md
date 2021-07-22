@@ -13,7 +13,7 @@
 
 ```
 git clone https://github.com/JHUGen/JHUGenMELA.git
-(cd JHUGenMELA; git checkout -b from-v232 v2.3.2; ./setup.sh -j;)
+(cd JHUGenMELA; git checkout -b from-v235 v2.3.5; ./setup.sh -j;)
 # Last line could also use './setup.sh -j standalone' in order to force standalone computation.
 ```
 
