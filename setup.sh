@@ -112,7 +112,12 @@ if [[ "$nSetupArgs" -eq 1 ]] && [[ "${setupArgs[0]}" == *"clean"* ]]; then
     if [[ ${usingCMSSW} -eq 1 ]];then
       scramv1 b "${setupArgs[@]}"
     else
-      make clean
+      for ff in $(find ./ -name makefile); do
+        ff=${ff//'/makefile'}
+        cd $ff &> /dev/null
+        make clean
+        cd - &> /dev/null
+      done
     fi
 
     exit $?

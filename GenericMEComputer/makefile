@@ -1,67 +1,96 @@
+ifndef ROOTSYS
+all:
+	@echo "ROOTSYS is not set. Please set ROOT environment properly"; echo
+else
+ifndef ROOFITSYS
+all:
+	@echo "ROOFITSYS is not set. Please set ROOT environment properly"; echo
+else
+
+
+PROJECTNAME          = MelaAnalytics
+PACKAGENAME          = GenericMEComputer
+
 COMPILEPATH          = $(PWD)/
-BASEINCLUDE          = $(COMPILEPATH)/../../
-MELADIR              = $(BASEINCLUDE)JHUGenMELA/MELA
-MELALIBDIR           = $(MELADIR)/data/${SCRAM_ARCH}
+BASEINCLUDE          = $(COMPILEPATH)../../
+
 INCLUDEDIR           = $(COMPILEPATH)interface/
 SRCDIR               = $(COMPILEPATH)src/
 BINDIR               = $(COMPILEPATH)bin/
+SCRIPTSDIR           = $(COMPILEPATH)scripts/
+OBJDIR               = $(COMPILEPATH)obj/
 LIBDIR               = $(COMPILEPATH)lib/
 TESTDIR              = $(COMPILEPATH)test/
 RUNDIR               = $(COMPILEPATH)
-LIB                  = libMelaAnalyticsGenericMEComputer.so
+LIBSHORT             = $(PROJECTNAME)$(PACKAGENAME)
+LIB                  = lib$(LIBSHORT).so
+LIBRULE              = $(LIBDIR)$(LIB)
 
+MELADIR              = $(BASEINCLUDE)JHUGenMELA/MELA/
+MELALIBDIR           = $(MELADIR)data/${SCRAM_ARCH}
+MELACXXFLAGS =  -I$(MELADIR)interface/ -L$(MELALIBDIR)
+MELALIBS =  -lJHUGenMELAMELA
+
+
+EXTCXXFLAGS   = $(MELACXXFLAGS)
+EXTLIBS       = $(MELALIBS)
 ROOTCFLAGS    = $(shell root-config --cflags) -Lrootlib
-ROOTLIBS     = $(shell root-config --libs) -Lrootlib
+ROOTLIBS     = $(shell root-config --libs) -lMathMore -Lrootlib
 
 ARCH         := $(shell root-config --arch)
 
 CXX           = g++
-CXXFLAGS      = -fPIC -g -O2 $(ROOTCFLAGS) -I$(ROOFITSYS)/include/ -I$(INCLUDEDIR) -I$(MELADIR)/interface/ -L$(MELALIBDIR)
+CXXINC        = -I$(ROOFITSYS)/include/ -I$(BASEINCLUDE) -I$(INCLUDEDIR)
+CXXDEFINES    = -D_COMPILE_STANDALONE_
+CXXFLAGS      = -fPIC -g -O2 $(ROOTCFLAGS) $(CXXDEFINES) -I$(CXXINC) $(EXTCXXFLAGS)
 LINKERFLAGS   = -Wl,-rpath=$(LIBDIR),-soname,$(LIB)
 
 NLIBS         = $(ROOTLIBS)
 # Hack here, because RooFit is removed from ROOT:
 NLIBS        += -L $(ROOFITSYS)/lib/ -lMinuit -lRooFitCore -lRooFit #-lboost_regex
 # Libraries for common user packages
-NLIBS        += -lJHUGenMELAMELA
+NLIBS        += $(EXTLIBS)
 # Filter out libNew because it leads to floating-point exceptions in versions of ROOT prior to 6.08.02
 # See the thread https://root-forum.cern.ch/t/linking-new-library-leads-to-a-floating-point-exception-at-startup/22404
 LIBS          = $(filter-out -lNew, $(NLIBS))
 
 
-SOURCES = $(wildcard $(SRCDIR)*.cc)
-OBJECTS = $(SOURCES:.cc=.o)
+SOURCESCC = $(wildcard $(SRCDIR)*.cc)
+SOURCESCXX = $(wildcard $(SRCDIR)*.cxx)
+OBJECTSPRIM = $(SOURCESCC:.cc=.o) $(SOURCESCXX:.cxx=.o)
+OBJECTS = $(subst $(SRCDIR),$(OBJDIR),$(OBJECTSPRIM))
+
 
 .PHONY: all help compile clean
+.SILENT: alldirs clean $(OBJECTS) $(LIBRULE)
 
-all: $(LIB)
+all: $(OBJECTS) $(LIBRULE)
 
 
-# General rule for making object files
-%.d:	$(SRCDIR)%.cc $(BINDIR)%.cc $(SRCDIR)%.cxx $(BINDIR)%.cxx
-	$(QUIET) echo "Checking dependencies for $<"; \
+alldirs:
+	mkdir -p $(OBJDIR); \
+	mkdir -p $(LIBDIR)
+
+$(LIBRULE):	$(OBJECTS) | alldirs
+	echo "Linking $(LIB)"; \
+	$(CXX) $(LINKERFLAGS) -shared $(OBJECTS) -o $@
+
+$(OBJDIR)%.d:	$(SRCDIR)%.c* | alldirs
+	echo "Checking dependencies for $<"; \
 	$(CXX) -MM -MT $@ -MT ${@:.d=.o} $(CXXFLAGS) $< > $@; \
                      [ -s $@ ] || rm -f $@
 
-%.o: 	$(SRCDIR)%.cc $(SRCDIR)%.cxx $(BINDIR)%.cc $(BINDIR)%.cxx
-	$(QUIET) echo "Compiling $<"; \
+$(OBJDIR)%.o: 	$(SRCDIR)%.c* | alldirs
+	echo "Compiling $<"; \
 	$(CXX) $(CXXFLAGS) $< -c -o $@ $(LIBS)
 
 
-$(LIB):	$(OBJECTS)
-	$(QUIET) echo "Linking $(LIB)"; \
-	$(CXX) $(LINKERFLAGS) -shared $(OBJECTS) -o $@; \
-        mkdir -p $(LIBDIR); \
-	mv $(LIB) $(LIBDIR)/$(LIB)
-
 clean:
+	rm -rf $(OBJDIR)
 	rm -rf $(LIBDIR)
 	rm -f $(SRCDIR)*.o
 	rm -f $(SRCDIR)*.so
 	rm -f $(SRCDIR)*.d
-	rm -f $(BINDIR)*.o
-	rm -f $(BINDIR)*.so
-	rm -f $(BINDIR)*.d
 	rm -rf $(RUNDIR)Pdfdata
 	rm -f $(RUNDIR)input.DAT
 	rm -f $(RUNDIR)process.DAT
@@ -72,7 +101,6 @@ clean:
 	rm -f $(RUNDIR)*.so
 	rm -f $(RUNDIR)*.d
 	rm -f $(RUNDIR)*.pcm
-	rm -f $(RUNDIR)*.py
 	rm -f $(RUNDIR)*.pyc
 	rm -rf $(TESTDIR)Pdfdata
 	rm -f $(TESTDIR)input.DAT
@@ -83,5 +111,9 @@ clean:
 	rm -f $(TESTDIR)*.so
 	rm -f $(TESTDIR)*.d
 	rm -f $(TESTDIR)*.pcm
-	rm -f $(TESTDIR)*.py
 	rm -f $(TESTDIR)*.pyc
+
+
+
+endif
+endif
