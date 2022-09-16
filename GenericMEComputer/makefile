@@ -26,8 +26,8 @@ LIBSHORT             = $(PROJECTNAME)$(PACKAGENAME)
 LIB                  = lib$(LIBSHORT).so
 LIBRULE              = $(LIBDIR)$(LIB)
 
-MELADIR              = $(BASEINCLUDE)JHUGenMELA/MELA/
-MELALIBDIR           = $(MELADIR)data/${SCRAM_ARCH}
+MELADIR              = ${MELA_LIB_PATH}/../../
+MELALIBDIR           = ${MELA_LIB_PATH}/
 MELACXXFLAGS =  -I$(MELADIR)interface/ -L$(MELALIBDIR)
 MELALIBS =  -lJHUGenMELAMELA
 

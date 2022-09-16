@@ -6,18 +6,14 @@ set -euo pipefail
 cd $(dirname ${BASH_SOURCE[0]})
 
 PKGDIR="$(readlink -f .)"
-declare -i forceStandalone=0
 declare -i doPrintEnv=0
 declare -i doPrintEnvInstr=0
-declare -i usingCMSSW=0
 declare -i needROOFITSYS_ROOTSYS=0
 declare -a setupArgs=()
 
 for farg in "$@"; do
   fargl="$(echo $farg | awk '{print tolower($0)}')"
-  if [[ "$fargl" == "standalone" ]]; then
-    forceStandalone=1
-  elif [[ "$fargl" == "env" ]]; then
+  if [[ "$fargl" == "env" ]]; then
     doPrintEnv=1
   elif [[ "$fargl" == "envinstr" ]]; then
     doPrintEnvInstr=1
@@ -28,30 +24,21 @@ done
 declare -i nSetupArgs
 nSetupArgs=${#setupArgs[@]}
 
-if [[ ${forceStandalone} -eq 0 ]] && [[ ! -z "${CMSSW_BASE+x}" ]]; then
-
-  usingCMSSW=1
-
-  eval $(scram ru -sh)
-
+if [[ ! -d ../JHUGenMELA ]]; then
+  echo "${PKGDIR}/../JHUGenMELA" does not exist.
+  exit 1
 fi
 
 printenv() {
-  # Print the environment variables from MELA as well if they are needed.
-  if [[ -d ../../JHUGenMELA ]]; then
-    envopts="env"
-    if [[ ${forceStandalone} -eq 1 ]]; then
-      envopts="${envopts} standalone"
-    fi
-    ../../JHUGenMELA/setup.sh ${envopts}
-    eval $(../../JHUGenMELA/setup.sh ${envopts})
+  ../JHUGenMELA/setup.sh env
+  eval $(../JHUGenMELA/setup.sh env)
+
+  if [[ -z "${MELAANALYTICS_PATH+x}" ]] || [[ "${MELAANALYTICS_PATH}" != "${PKGDIR}" ]]; then
+    echo "export MELAANALYTICS_PATH=${PKGDIR}"
+    export MELAANALYTICS_PATH="${PKGDIR}"
   fi
 
-  if [[ ${usingCMSSW} -eq 1 ]]; then
-    return 0
-  fi
-
-  libappend="${PKGDIR}CandidateLOCaster/lib:${PKGDIR}EventContainer/lib:${PKGDIR}GenericMEComputer/lib"
+  libappend="${MELAANALYTICS_PATH}/CandidateLOCaster/lib:${MELAANALYTICS_PATH}/EventContainer/lib:${MELAANALYTICS_PATH}/GenericMEComputer/lib"
   end=""
   if [[ ! -z "${LD_LIBRARY_PATH+x}" ]]; then
     end=":${LD_LIBRARY_PATH}"
@@ -61,34 +48,23 @@ printenv() {
   fi
 }
 doenv() {
-  # Set up the environment variables from MELA as well if they are needed.
-  if [[ -d ../../JHUGenMELA ]]; then
-    envopts="env"
-    if [[ ${forceStandalone} -eq 1 ]]; then
-      envopts="${envopts} standalone"
-    fi
-    eval $(../../JHUGenMELA/setup.sh ${envopts})
-  fi
+  eval $(../JHUGenMELA/setup.sh env)
 
-  if [[ ${usingCMSSW} -eq 1 ]]; then
-    return 0
+  if [[ -z "${MELAANALYTICS_PATH+x}" ]] || [[ "${MELAANALYTICS_PATH}" != "${PKGDIR}" ]]; then
+    export MELAANALYTICS_PATH="${PKGDIR}"
   fi
 }
 printenvinstr () {
-  if [[ ${usingCMSSW} -eq 1 ]]; then
-    return 0
-  fi
-
   echo
   echo "remember to do"
   echo
-  echo 'eval $(./setup.sh env standalone)'
+  echo 'eval $('${BASH_SOURCE[0]}' env)'
   echo "or"
-  echo 'eval `./setup.sh env standalone`'
+  echo 'eval `'${BASH_SOURCE[0]}' env`'
   echo
   echo "if you are using a bash-related shell, or you can do"
   echo
-  echo './setup.sh env standalone'
+  echo ${BASH_SOURCE[0]}' env'
   echo
   echo "and change the commands according to your shell in order to do something equivalent to set up the environment variables."
   echo
@@ -109,16 +85,12 @@ fi
 
 
 if [[ "$nSetupArgs" -eq 1 ]] && [[ "${setupArgs[0]}" == *"clean"* ]]; then
-    if [[ ${usingCMSSW} -eq 1 ]];then
-      scramv1 b "${setupArgs[@]}"
-    else
-      for ff in $(find ./ -name makefile); do
-        ff=${ff//'/makefile'}
-        cd $ff &> /dev/null
-        make clean
-        cd - &> /dev/null
-      done
-    fi
+    for ff in $(find ./ -name makefile); do
+      ff=${ff//'/makefile'}
+      cd $ff &> /dev/null
+      make clean
+      cd - &> /dev/null
+    done
 
     exit $?
 elif [[ "$nSetupArgs" -ge 1 ]] && [[ "$nSetupArgs" -le 2 ]] && [[ "${setupArgs[0]}" == *"-j"* ]]; then
@@ -132,32 +104,20 @@ fi
 
 doenv
 
-if [[ ${usingCMSSW} -eq 1 ]]; then
-  scramv1 b "${setupArgs[@]}"
+for ff in $(find ./ -name makefile); do
+  ff=${ff//'/makefile'}
+  cd $ff &> /dev/null
+
+  make "${setupArgs[@]}"
 
   compile_status=$?
   if [[ ${compile_status} -ne 0 ]]; then
-    echo "Compilation failed with status ${compile_status}."
+    echo "Compilation of ${ff} failed with status ${compile_status}."
     exit ${compile_status}
   fi
-else
 
-  for ff in $(find ./ -name makefile); do
-    ff=${ff//'/makefile'}
-    cd $ff &> /dev/null
-
-    make "${setupArgs[@]}"
-
-    compile_status=$?
-    if [[ ${compile_status} -ne 0 ]]; then
-      echo "Compilation of ${ff} failed with status ${compile_status}."
-      exit ${compile_status}
-    fi
-
-    cd - &> /dev/null
-  done
-
-fi
+  cd - &> /dev/null
+done
 
 printenvinstr
 
