@@ -59,10 +59,11 @@ SOURCESCC = $(wildcard $(SRCDIR)*.cc)
 SOURCESCXX = $(wildcard $(SRCDIR)*.cxx)
 OBJECTSPRIM = $(SOURCESCC:.cc=.o) $(SOURCESCXX:.cxx=.o)
 OBJECTS = $(subst $(SRCDIR),$(OBJDIR),$(OBJECTSPRIM))
+DEPS = $(OBJECTS:.o=.d)
 
 
 .PHONY: all help compile clean
-.SILENT: alldirs clean $(OBJECTS) $(LIBRULE)
+.SILENT: alldirs clean $(OBJECTS) $(DEPS) $(LIBRULE)
 
 all: $(OBJECTS) $(LIBRULE)
 
@@ -77,10 +78,10 @@ $(LIBRULE):	$(OBJECTS) | alldirs
 
 $(OBJDIR)%.d:	$(SRCDIR)%.c* | alldirs
 	echo "Checking dependencies for $<"; \
-	$(CXX) -MM -MT $@ -MT ${@:.d=.o} $(CXXFLAGS) $< > $@; \
+	$(CC) -MM -MT $@ $(CXXFLAGS) $< > $@; \
                      [ -s $@ ] || rm -f $@
 
-$(OBJDIR)%.o: 	$(SRCDIR)%.c* | alldirs
+$(OBJDIR)%.o: 	$(SRCDIR)%.c* $(OBJDIR)%.d | alldirs
 	echo "Compiling $<"; \
 	$(CXX) $(CXXFLAGS) $< -c -o $@ $(LIBS)
 
@@ -113,6 +114,8 @@ clean:
 	rm -f $(TESTDIR)*.pcm
 	rm -f $(TESTDIR)*.pyc
 
+
+include $(DEPS)
 
 
 endif

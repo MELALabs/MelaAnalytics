@@ -7,30 +7,20 @@
 - The CandidateLOCaster package allows the user to cast some topologies NLO in QCD into those LO in QCD by merging gluons into quarks appropriately.
 	It is a pretty good approxiamtion for EW processes, but does not provide a good enough description for QCD processes themselves.
 
-## Checkout instructions
+## Checkout and compilation instructions
 
 ### MELA
 
 ```
 git clone https://github.com/JHUGen/JHUGenMELA.git
-(cd JHUGenMELA; git checkout -b from-v235 v2.3.5; ./setup.sh -j;)
-# Last line could also use './setup.sh -j standalone' in order to force standalone computation.
+(cd JHUGenMELA; git checkout -b from-v238 v2.3.8; ./setup.sh -j;)
+eval $(./JHUGenMELA/setup.sh env)
 ```
 
 ### MELA Analytics
 
 ```
 git clone https://github.com/MELALabs/MelaAnalytics.git
-(cd MelaAnalytics; git checkout -b from-v22 v2.2)
-```
-
-## Compilation
-
-First, please follow the instructions on MELA core package to compile it. Assuming you already did that,
-
-- if you are using CMSSW, regular scram should work.
-- if you are not using CMSSW, each package contains its own makefile. You can simply do
-
-```
-make (-j #cores)
+(cd MelaAnalytics; git checkout -b from-v23 v2.3)
+eval $(./MelaAnalytics/setup.sh env)
 ```
